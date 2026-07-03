@@ -1,0 +1,1163 @@
+<!DOCTYPE html>
+<html lang="fr" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calisthenics Workout Generator</title>
+<meta name="description" content="Générateur d'entraînements aléatoires de calisthénie et street workout">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  darkMode: 'class',
+  theme: {
+    extend: {
+      colors: {
+        accent: { DEFAULT: '#22c55e', light: '#4ade80', dark: '#16a34a' },
+        surface: '#1e293b',
+        'surface-hover': '#334155',
+        card: '#1a2332',
+      }
+    }
+  }
+}
+</script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+* { font-family: 'Inter', system-ui, sans-serif; }
+body { background: #0f172a; color: #e2e8f0; }
+.tab-btn.active { color: #22c55e; border-bottom-color: #22c55e; }
+.sub-tab-btn { padding: 0.5rem 1rem; font-size: 0.875rem; font-weight: 500; color: #64748b; border-bottom: 2px solid transparent; transition: all 0.2s; cursor: pointer; }
+.sub-tab-btn:hover { color: #94a3b8; }
+.sub-tab-btn.active { color: #22c55e; border-bottom-color: #22c55e; }
+.card { background: #1a2332; border: 1px solid #1e293b; border-radius: 1rem; }
+.card:hover { border-color: #334155; }
+.btn-primary { background: #22c55e; color: #052e16; font-weight: 600; transition: all 0.2s; }
+.btn-primary:hover { background: #4ade80; transform: translateY(-1px); box-shadow: 0 4px 20px rgba(34,197,94,0.3); }
+.btn-primary:active { transform: translateY(0); }
+.btn-secondary { background: #1e293b; color: #e2e8f0; border: 1px solid #334155; transition: all 0.2s; }
+.btn-secondary:hover { background: #334155; border-color: #475569; }
+.btn-ghost { color: #94a3b8; transition: all 0.15s; }
+.btn-ghost:hover { color: #22c55e; background: rgba(34,197,94,0.1); }
+.exercise-card { background: #1e293b; border-left: 3px solid #22c55e; border-radius: 0.75rem; transition: all 0.2s; }
+.exercise-card:hover { background: #263548; }
+.timer-work { color: #22c55e; }
+.timer-rest { color: #ef4444; }
+.notification { animation: slideIn 0.3s ease-out; }
+@keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.fade-in { animation: fadeIn 0.4s ease-out; }
+.modal-overlay { background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); }
+input, select, textarea { background: #0f172a; border: 1px solid #334155; border-radius: 0.5rem; color: #e2e8f0; padding: 0.5rem 0.75rem; outline: none; transition: border-color 0.2s; }
+input:focus, select:focus, textarea:focus { border-color: #22c55e; box-shadow: 0 0 0 2px rgba(34,197,94,0.15); }
+input[type="checkbox"] { accent-color: #22c55e; }
+.sort-btn { cursor: pointer; user-select: none; transition: color 0.15s; }
+.sort-btn:hover { color: #22c55e; }
+.sort-asc::after { content: ' ▲'; font-size: 0.6rem; }
+.sort-desc::after { content: ' ▼'; font-size: 0.6rem; }
+@media print {
+  body { background: white !important; color: #000 !important; }
+  .no-print { display: none !important; }
+  .card, .exercise-card { background: #f8fafc !important; border: 1px solid #ddd !important; }
+  .print-only { display: block !important; }
+  h1, h2, h3 { color: #000 !important; }
+}
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #0f172a; }
+::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #475569; }
+</style>
+</head>
+<body class="min-h-screen">
+
+<div id="notification-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2 no-print"></div>
+
+<div class="max-w-5xl mx-auto px-4 py-6">
+  <header class="flex items-center justify-between mb-8 no-print">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-accent/20 flex items-center justify-center">
+        <i data-lucide="dumbbell" class="w-6 h-6 text-accent"></i>
+      </div>
+      <div>
+        <h1 class="text-xl font-bold text-white">Calisthenics Generator</h1>
+        <p class="text-xs text-slate-400">Street Workout · Séances intelligentes</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-3 text-xs text-slate-500">
+      <span class="flex items-center gap-1.5"><i data-lucide="zap" class="w-3.5 h-3.5 text-accent"></i><span id="exercise-count">0</span></span>
+      <span class="flex items-center gap-1.5"><i data-lucide="activity" class="w-3.5 h-3.5 text-orange-400"></i><span id="warmup-count">0</span></span>
+    </div>
+  </header>
+
+  <div class="flex gap-1 mb-6 no-print border-b border-slate-800">
+    <button class="tab-btn active flex items-center gap-2 px-5 py-3 text-sm font-medium text-slate-400 border-b-2 border-transparent transition-all" data-tab="config">
+      <i data-lucide="sliders" class="w-4 h-4"></i> Configuration
+    </button>
+    <button class="tab-btn flex items-center gap-2 px-5 py-3 text-sm font-medium text-slate-400 border-b-2 border-transparent transition-all" data-tab="database">
+      <i data-lucide="database" class="w-4 h-4"></i> Base d'exercices
+    </button>
+  </div>
+
+  <div id="tab-config" class="tab-content">
+    <div class="card p-6 mb-6">
+      <h2 class="text-lg font-semibold text-white mb-5 flex items-center gap-2">
+        <i data-lucide="settings" class="w-5 h-5 text-accent"></i>
+        Configurer ma séance
+      </h2>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div>
+          <label class="block text-sm font-medium text-slate-300 mb-2">Matériel disponible</label>
+          <div class="space-y-2" id="equipment-group">
+            <label class="flex items-center gap-2.5 cursor-pointer group"><input type="checkbox" value="Aucun" checked class="w-4 h-4"><span class="text-sm text-slate-300 group-hover:text-white transition">Poids du corps</span></label>
+            <label class="flex items-center gap-2.5 cursor-pointer group"><input type="checkbox" value="Élastique" class="w-4 h-4"><span class="text-sm text-slate-300 group-hover:text-white transition">Élastique</span></label>
+            <label class="flex items-center gap-2.5 cursor-pointer group"><input type="checkbox" value="Barre de traction" class="w-4 h-4"><span class="text-sm text-slate-300 group-hover:text-white transition">Barre de traction</span></label>
+            <label class="flex items-center gap-2.5 cursor-pointer group"><input type="checkbox" value="Barre à dips" class="w-4 h-4"><span class="text-sm text-slate-300 group-hover:text-white transition">Barre à dips</span></label>
+            <label class="flex items-center gap-2.5 cursor-pointer group"><input type="checkbox" value="Lest" class="w-4 h-4"><span class="text-sm text-slate-300 group-hover:text-white transition">Lest</span></label>
+          </div>
+        </div>
+
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-slate-300 mb-2">Durée</label>
+            <select id="duration" class="w-full">
+              <option value="15">15 min</option>
+              <option value="30" selected>30 min</option>
+              <option value="45">45 min</option>
+              <option value="60">60 min</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-300 mb-2">Niveau</label>
+            <select id="level" class="w-full">
+              <option value="Débutant">Débutant</option>
+              <option value="Intermédiaire" selected>Intermédiaire</option>
+              <option value="Avancé">Avancé</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-slate-300 mb-2">Objectif</label>
+          <div class="space-y-1.5" id="goal-group">
+            <label class="flex items-center gap-2.5 cursor-pointer group"><input type="checkbox" value="Full-body" checked class="w-4 h-4 goal-cb" id="goal-fullbody"><span class="text-sm text-slate-300 group-hover:text-white transition">Full-body</span></label>
+            <div class="grid grid-cols-2 gap-x-3 gap-y-1 ml-1.5">
+              <label class="flex items-center gap-2 cursor-pointer group"><input type="checkbox" value="Push" class="w-3.5 h-3.5 goal-cb"><span class="text-xs text-slate-300 group-hover:text-white transition">Push</span></label>
+              <label class="flex items-center gap-2 cursor-pointer group"><input type="checkbox" value="Pull" class="w-3.5 h-3.5 goal-cb"><span class="text-xs text-slate-300 group-hover:text-white transition">Pull</span></label>
+              <label class="flex items-center gap-2 cursor-pointer group"><input type="checkbox" value="Legs" class="w-3.5 h-3.5 goal-cb"><span class="text-xs text-slate-300 group-hover:text-white transition">Legs</span></label>
+              <label class="flex items-center gap-2 cursor-pointer group"><input type="checkbox" value="Abdos" class="w-3.5 h-3.5 goal-cb"><span class="text-xs text-slate-300 group-hover:text-white transition">Abdos</span></label>
+              <label class="flex items-center gap-2 cursor-pointer group"><input type="checkbox" value="Cardio" class="w-3.5 h-3.5 goal-cb"><span class="text-xs text-slate-300 group-hover:text-white transition">Cardio</span></label>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-slate-300 mb-2">Format</label>
+          <select id="format" class="w-full">
+            <option value="classic">Classique (Séries x Répétitions)</option>
+            <option value="hiit">HIIT / Circuit</option>
+            <option value="amrap">AMRAP</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="mt-5 flex items-center gap-4">
+        <label class="flex items-center gap-2.5 cursor-pointer group">
+          <input type="checkbox" id="alternate-intensity" class="w-4 h-4">
+          <span class="text-sm text-slate-300 group-hover:text-white transition">Alterner l'intensité</span>
+        </label>
+      </div>
+
+      <button id="generate-btn" class="btn-primary w-full mt-5 py-3.5 rounded-xl text-base flex items-center justify-center gap-2">
+        <i data-lucide="sparkles" class="w-5 h-5"></i>
+        Générer ma séance
+      </button>
+    </div>
+
+    <div id="results" class="hidden space-y-6">
+      <div id="warmup-section"></div>
+      <div id="main-section"></div>
+      <div id="cooldown-section"></div>
+      <div id="timer-section" class="no-print"></div>
+      <div id="export-section" class="no-print flex gap-3"></div>
+    </div>
+  </div>
+
+  <div id="tab-database" class="tab-content hidden">
+    <div class="card p-6">
+      <div class="flex gap-1 mb-5 border-b border-slate-800">
+        <button class="sub-tab-btn active" data-subtab="exercises">Exercices principaux</button>
+        <button class="sub-tab-btn" data-subtab="warmup">Échauffement & Retour au calme</button>
+      </div>
+
+      <div id="subtab-exercises" class="subtab-content">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-base font-semibold text-white flex items-center gap-2">
+            <i data-lucide="zap" class="w-4 h-4 text-accent"></i> Exercices principaux
+          </h2>
+          <div class="flex gap-2">
+            <button id="import-csv-btn" class="btn-secondary text-xs px-3 py-2 rounded-lg flex items-center gap-1.5">
+              <i data-lucide="upload" class="w-3.5 h-3.5"></i> Importer CSV
+            </button>
+            <button id="export-csv-btn" class="btn-secondary text-xs px-3 py-2 rounded-lg flex items-center gap-1.5">
+              <i data-lucide="download" class="w-3.5 h-3.5"></i> Exporter CSV
+            </button>
+            <button id="add-exercise-btn" class="btn-primary text-xs px-3 py-2 rounded-lg flex items-center gap-1.5">
+              <i data-lucide="plus" class="w-3.5 h-3.5"></i> Ajouter
+            </button>
+          </div>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="text-slate-400 border-b border-slate-800">
+                <th class="text-left py-3 px-2 font-medium sort-btn" data-sort="Nom">Nom</th>
+                <th class="text-left py-3 px-2 font-medium sort-btn" data-sort="Objectif">Objectif</th>
+                <th class="text-left py-3 px-2 font-medium sort-btn" data-sort="Difficulté">Difficulté</th>
+                <th class="text-left py-3 px-2 font-medium sort-btn" data-sort="Équipement">Équipement</th>
+                <th class="text-left py-3 px-2 font-medium sort-btn" data-sort="Intensité">Intensité</th>
+                <th class="text-right py-3 px-2 font-medium">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="exercise-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="subtab-warmup" class="subtab-content hidden">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-base font-semibold text-white flex items-center gap-2">
+            <i data-lucide="activity" class="w-4 h-4 text-orange-400"></i> Échauffement & Retour au calme
+          </h2>
+          <div class="flex gap-2">
+            <button id="import-warmup-btn" class="btn-secondary text-xs px-3 py-2 rounded-lg flex items-center gap-1.5">
+              <i data-lucide="upload" class="w-3.5 h-3.5"></i> Importer CSV
+            </button>
+            <button id="export-warmup-btn" class="btn-secondary text-xs px-3 py-2 rounded-lg flex items-center gap-1.5">
+              <i data-lucide="download" class="w-3.5 h-3.5"></i> Exporter CSV
+            </button>
+            <button id="add-warmup-btn" class="btn-primary text-xs px-3 py-2 rounded-lg flex items-center gap-1.5">
+              <i data-lucide="plus" class="w-3.5 h-3.5"></i> Ajouter
+            </button>
+          </div>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="text-slate-400 border-b border-slate-800">
+                <th class="text-left py-3 px-2 font-medium sort-btn" data-sort="Nom">Nom</th>
+                <th class="text-left py-3 px-2 font-medium sort-btn" data-sort="Type">Type</th>
+                <th class="text-left py-3 px-2 font-medium sort-btn" data-sort="Objectif">Objectif</th>
+                <th class="text-left py-3 px-2 font-medium sort-btn" data-sort="Difficulté">Difficulté</th>
+                <th class="text-left py-3 px-2 font-medium sort-btn" data-sort="Intensité">Intensité</th>
+                <th class="text-right py-3 px-2 font-medium">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="warmup-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="exercise-modal" class="fixed inset-0 z-50 hidden modal-overlay flex items-center justify-center p-4">
+  <div class="card p-6 w-full max-w-md" id="modal-content">
+    <h3 class="text-lg font-semibold text-white mb-4" id="modal-title">Ajouter un exercice</h3>
+    <div class="space-y-3">
+      <div><label class="block text-xs font-medium text-slate-400 mb-1">Nom</label><input id="ex-name" class="w-full"></div>
+      <div id="ex-type-group"><label class="block text-xs font-medium text-slate-400 mb-1">Type</label>
+        <select id="ex-type" class="w-full">
+          <option value="Échauffement">Échauffement</option><option value="Retour au calme">Retour au calme</option>
+        </select>
+      </div>
+      <div><label class="block text-xs font-medium text-slate-400 mb-1">Objectif</label>
+        <select id="ex-goal" class="w-full">
+          <option value="Push">Push</option><option value="Pull">Pull</option>
+          <option value="Legs">Legs</option><option value="Abdos">Abdos</option>
+          <option value="Cardio">Cardio</option><option value="Full-body">Full-body</option>
+        </select>
+      </div>
+      <div><label class="block text-xs font-medium text-slate-400 mb-1">Difficulté</label>
+        <select id="ex-difficulty" class="w-full">
+          <option value="Débutant">Débutant</option><option value="Intermédiaire">Intermédiaire</option><option value="Avancé">Avancé</option>
+        </select>
+      </div>
+      <div><label class="block text-xs font-medium text-slate-400 mb-1">Équipement</label>
+        <select id="ex-equipment" class="w-full">
+          <option value="Aucun">Aucun</option><option value="Élastique">Élastique</option>
+          <option value="Barre de traction">Barre de traction</option>
+          <option value="Barre à dips">Barre à dips</option><option value="Lest">Lest</option>
+        </select>
+      </div>
+      <div><label class="block text-xs font-medium text-slate-400 mb-1">Intensité (1-5)</label>
+        <input id="ex-intensity" type="number" min="1" max="5" value="2" class="w-full">
+      </div>
+    </div>
+    <div class="flex gap-3 mt-5">
+      <button id="modal-cancel" class="btn-secondary flex-1 py-2.5 rounded-lg text-sm">Annuler</button>
+      <button id="modal-save" class="btn-primary flex-1 py-2.5 rounded-lg text-sm">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<div id="csv-modal" class="fixed inset-0 z-50 hidden modal-overlay flex items-center justify-center p-4">
+  <div class="card p-6 w-full max-w-2xl">
+    <h3 class="text-lg font-semibold text-white mb-1" id="csv-modal-title">Importer / Exporter CSV</h3>
+    <p class="text-xs text-slate-400 mb-4" id="csv-modal-desc">Copiez ce texte ou collez votre propre base CSV.</p>
+    <textarea id="csv-text" class="w-full h-64 font-mono text-xs"></textarea>
+    <div class="flex gap-3 mt-4">
+      <button id="csv-cancel" class="btn-secondary flex-1 py-2.5 rounded-lg text-sm">Fermer</button>
+      <button id="csv-apply" class="btn-primary flex-1 py-2.5 rounded-lg text-sm">Appliquer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ====== DEFAULT DATABASES ======
+const DEFAULT_CSV = `Nom,Objectif,Difficulté,Équipement,Intensité
+Pompes standard,Push,Débutant,Aucun,2
+Pompes diamant,Push,Intermédiaire,Aucun,3
+Pompes larges,Push,Débutant,Aucun,2
+Pompes déclinées,Push,Intermédiaire,Aucun,3
+Pompes piquées,Push,Intermédiaire,Aucun,4
+Pompes sur poignets,Push,Intermédiaire,Aucun,3
+Pompes archer,Push,Avancé,Aucun,5
+Pompes japonaise,Push,Avancé,Aucun,5
+Pompes main levée,Push,Avancé,Aucun,4
+Dips entre chaises,Push,Intermédiaire,Aucun,3
+Dips parallèles,Push,Intermédiaire,Barre à dips,4
+Dips lestés,Push,Avancé,Barre à dips,5
+Dips anneaux,Push,Avancé,Barre à dips,5
+Tractions prise large,Pull,Intermédiaire,Barre de traction,4
+Tractions prise serrée,Pull,Intermédiaire,Barre de traction,4
+Tractions pronation,Pull,Intermédiaire,Barre de traction,4
+Tractions supination,Pull,Intermédiaire,Barre de traction,3
+Tractions neutre,Pull,Intermédiaire,Barre de traction,3
+Tractions archer,Pull,Avancé,Barre de traction,5
+Muscle-ups,Pull,Avancé,Barre de traction,5
+Rowing australien,Pull,Débutant,Barre de traction,2
+Rowing inversé,Pull,Intermédiaire,Barre de traction,3
+Tractions lestées,Pull,Avancé,Barre de traction,5
+Squats poids du corps,Legs,Débutant,Aucun,2
+Squats bulgares,Legs,Intermédiaire,Aucun,3
+Fentes avant,Legs,Débutant,Aucun,2
+Fentes sautées,Legs,Intermédiaire,Aucun,3
+Pistol squats,Legs,Avancé,Aucun,5
+Ponts fessiers,Legs,Débutant,Aucun,1
+Relevés de mollets,Legs,Débutant,Aucun,1
+Sauts groupés,Legs,Intermédiaire,Aucun,3
+Step-ups,Legs,Débutant,Aucun,2
+Nordic curls,Legs,Avancé,Élastique,5
+Squats sautés,Legs,Intermédiaire,Aucun,3
+Crunches,Abdos,Débutant,Aucun,1
+Relevés de jambes,Abdos,Intermédiaire,Aucun,3
+Gainage ventral,Abdos,Débutant,Aucun,2
+Gainage latéral,Abdos,Débutant,Aucun,2
+Russian twists,Abdos,Intermédiaire,Aucun,2
+Dragon flag,Abdos,Avancé,Aucun,5
+V-ups,Abdos,Intermédiaire,Aucun,3
+Mountain climbers,Abdos,Débutant,Aucun,2
+Hollow body hold,Abdos,Intermédiaire,Aucun,3
+Bicycle crunches,Abdos,Intermédiaire,Aucun,2
+Planche avant,Abdos,Avancé,Aucun,5
+Burpees,Cardio,Intermédiaire,Aucun,4
+Jumping jacks,Cardio,Débutant,Aucun,1
+Genoux hauts,Cardio,Débutant,Aucun,2
+Box jumps,Cardio,Intermédiaire,Aucun,3
+Jump rope,Cardio,Intermédiaire,Aucun,2
+Mountain climbers vitesse,Cardio,Intermédiaire,Aucun,3`;
+
+const DEFAULT_WARMUP_CSV = `Nom,Type,Objectif,Difficulté,Intensité
+Cercles de bras,Échauffement,Push,Débutant,1
+Rotations d'épaules,Échauffement,Push,Débutant,1
+Rotations de hanches,Échauffement,Legs,Débutant,1
+Rotations de chevilles,Échauffement,Legs,Débutant,1
+Rotations du cou,Échauffement,Full-body,Débutant,1
+Mobilité des poignets,Échauffement,Push,Débutant,1
+Étirement chat-vache,Échauffement,Full-body,Débutant,1
+Balancements de jambes,Échauffement,Legs,Débutant,1
+Rotations du tronc,Échauffement,Full-body,Débutant,1
+Pompes inclinées légères,Échauffement,Push,Débutant,1
+Squats à vide,Échauffement,Legs,Débutant,1
+Fentes légères,Échauffement,Legs,Débutant,1
+Étirement ischio-jambiers,Retour au calme,Legs,Débutant,1
+Étirement quadriceps,Retour au calme,Legs,Débutant,1
+Étirement pectoraux,Retour au calme,Push,Débutant,1
+Étirement triceps,Retour au calme,Push,Débutant,1
+Étirement dorsaux,Retour au calme,Pull,Débutant,1
+Papillon,Retour au calme,Legs,Débutant,1
+Posture de l'enfant,Retour au calme,Full-body,Débutant,1
+Étirement épaules,Retour au calme,Push,Débutant,1
+Étirement cou,Retour au calme,Full-body,Débutant,1
+Étirement adducteurs,Retour au calme,Legs,Débutant,1
+Étirement lombaires,Retour au calme,Full-body,Débutant,1
+Étirement grand dorsal,Retour au calme,Pull,Débutant,1`;
+
+// ====== STATE ======
+let exercises = [];
+let warmupExercises = [];
+let editingIndex = -1;
+let editingWarmupIndex = -1;
+let modalMode = 'exercise';
+let csvMode = 'exercise';
+let currentWorkout = null;
+let timerInterval = null;
+let timerRunning = false;
+let timerPaused = false;
+let sortMain = { field: null, dir: 'asc' };
+let sortWarmup = { field: null, dir: 'asc' };
+
+// ====== NOTIFICATIONS ======
+function notify(msg, type = 'success') {
+  const c = document.getElementById('notification-container');
+  const colors = { success: 'border-l-accent', error: 'border-l-red-500', info: 'border-l-blue-500' };
+  const icons = { success: 'check-circle', error: 'alert-circle', info: 'info' };
+  const el = document.createElement('div');
+  el.className = `notification card px-4 py-3 flex items-center gap-3 text-sm border-l-4 ${colors[type] || colors.success}`;
+  el.innerHTML = `<i data-lucide="${icons[type]}" class="w-4 h-4 flex-shrink-0 ${type === 'success' ? 'text-accent' : type === 'error' ? 'text-red-400' : 'text-blue-400'}"></i><span>${msg}</span>`;
+  c.appendChild(el);
+  lucide.createIcons({ scope: el });
+  setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity 0.3s'; setTimeout(() => el.remove(), 300); }, 3000);
+}
+
+// ====== CSV PARSING ======
+function parseCSV(text) {
+  const lines = text.split('\n').map(l => l.trim()).filter(l => l);
+  if (lines.length < 2) return [];
+  const headers = lines[0].split(',').map(h => h.trim());
+  return lines.slice(1).map(line => {
+    const vals = line.split(',').map(v => v.trim());
+    const obj = {};
+    headers.forEach((h, i) => obj[h] = vals[i] || '');
+    return obj;
+  }).filter(e => e.Nom);
+}
+
+function toCSV(data, headers) {
+  const h = headers || ['Nom', 'Objectif', 'Difficulté', 'Équipement', 'Intensité'];
+  const rows = data.map(e => h.map(k => e[k] || '').join(','));
+  return h.join(',') + '\n' + rows.join('\n');
+}
+
+// ====== LOCAL STORAGE - MAIN EXERCISES ======
+function loadExercises() {
+  const saved = localStorage.getItem('calisthenics_exercises');
+  if (saved) { try { exercises = JSON.parse(saved); } catch (e) { exercises = parseCSV(DEFAULT_CSV); } }
+  else { exercises = parseCSV(DEFAULT_CSV); }
+  updateCounts();
+  renderTable();
+}
+
+function saveExercises() {
+  localStorage.setItem('calisthenics_exercises', JSON.stringify(exercises));
+  updateCounts();
+  renderTable();
+}
+
+// ====== LOCAL STORAGE - WARMUP/COOLDOWN ======
+function loadWarmupExercises() {
+  const saved = localStorage.getItem('calisthenics_warmup');
+  if (saved) { try { warmupExercises = JSON.parse(saved); } catch (e) { warmupExercises = parseCSV(DEFAULT_WARMUP_CSV); } }
+  else { warmupExercises = parseCSV(DEFAULT_WARMUP_CSV); }
+  updateCounts();
+  renderWarmupTable();
+}
+
+function saveWarmupExercises() {
+  localStorage.setItem('calisthenics_warmup', JSON.stringify(warmupExercises));
+  updateCounts();
+  renderWarmupTable();
+}
+
+function updateCounts() {
+  document.getElementById('exercise-count').textContent = exercises.length;
+  document.getElementById('warmup-count').textContent = warmupExercises.length;
+}
+
+// ====== TABLE RENDER - MAIN ======
+function renderTable() {
+  const tbody = document.getElementById('exercise-table-body');
+  tbody.innerHTML = exercises.map((ex, i) => {
+    const dots = Array(5).fill(0).map((_, j) =>
+      `<span class="${j < parseInt(ex.Intensité) ? 'text-accent' : 'text-slate-700'}">●</span>`
+    ).join('');
+    return `<tr class="border-b border-slate-800 hover:bg-slate-800/40 transition">
+      <td class="py-3 px-2 text-white font-medium">${escHtml(ex.Nom)}</td>
+      <td class="py-3 px-2">${escHtml(ex.Objectif)}</td>
+      <td class="py-3 px-2">${escHtml(ex.Difficulté)}</td>
+      <td class="py-3 px-2 text-slate-400">${escHtml(ex.Équipement)}</td>
+      <td class="py-3 px-2 text-sm tracking-wider">${dots}</td>
+      <td class="py-3 px-2 text-right">
+        <button onclick="editExercise(${i})" class="btn-ghost p-1.5 rounded-lg inline-flex"><i data-lucide="pencil" class="w-4 h-4"></i></button>
+        <button onclick="deleteExercise(${i})" class="btn-ghost p-1.5 rounded-lg inline-flex text-red-400 hover:text-red-300"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+      </td>
+    </tr>`;
+  }).join('');
+  lucide.createIcons({ scope: tbody });
+}
+
+// ====== TABLE RENDER - WARMUP ======
+function renderWarmupTable() {
+  const tbody = document.getElementById('warmup-table-body');
+  tbody.innerHTML = warmupExercises.map((ex, i) => {
+    const dots = Array(5).fill(0).map((_, j) =>
+      `<span class="${j < parseInt(ex.Intensité) ? 'text-accent' : 'text-slate-700'}">●</span>`
+    ).join('');
+    const typeColor = ex.Type === 'Échauffement' ? 'text-orange-400' : 'text-blue-400';
+    return `<tr class="border-b border-slate-800 hover:bg-slate-800/40 transition">
+      <td class="py-3 px-2 text-white font-medium">${escHtml(ex.Nom)}</td>
+      <td class="py-3 px-2"><span class="${typeColor}">${escHtml(ex.Type)}</span></td>
+      <td class="py-3 px-2">${escHtml(ex.Objectif)}</td>
+      <td class="py-3 px-2">${escHtml(ex.Difficulté)}</td>
+      <td class="py-3 px-2 text-sm tracking-wider">${dots}</td>
+      <td class="py-3 px-2 text-right">
+        <button onclick="editWarmupExercise(${i})" class="btn-ghost p-1.5 rounded-lg inline-flex"><i data-lucide="pencil" class="w-4 h-4"></i></button>
+        <button onclick="deleteWarmupExercise(${i})" class="btn-ghost p-1.5 rounded-lg inline-flex text-red-400 hover:text-red-300"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+      </td>
+    </tr>`;
+  }).join('');
+  lucide.createIcons({ scope: tbody });
+}
+
+function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ====== MAIN EXERCISE CRUD ======
+function editExercise(i) {
+  modalMode = 'exercise';
+  editingIndex = i;
+  const ex = exercises[i];
+  document.getElementById('ex-type-group').classList.add('hidden');
+  document.getElementById('ex-name').value = ex.Nom;
+  document.getElementById('ex-goal').value = ex.Objectif;
+  document.getElementById('ex-difficulty').value = ex.Difficulté;
+  document.getElementById('ex-equipment').value = ex.Équipement;
+  document.getElementById('ex-intensity').value = ex.Intensité;
+  document.getElementById('modal-title').textContent = 'Modifier l\'exercice';
+  document.getElementById('exercise-modal').classList.remove('hidden');
+}
+
+function deleteExercise(i) {
+  exercises.splice(i, 1);
+  saveExercises();
+  notify('Exercice supprimé', 'info');
+}
+
+function openAddModal() {
+  modalMode = 'exercise';
+  editingIndex = -1;
+  document.getElementById('ex-type-group').classList.add('hidden');
+  document.getElementById('ex-name').value = '';
+  document.getElementById('ex-goal').value = 'Push';
+  document.getElementById('ex-difficulty').value = 'Débutant';
+  document.getElementById('ex-equipment').value = 'Aucun';
+  document.getElementById('ex-intensity').value = '3';
+  document.getElementById('modal-title').textContent = 'Ajouter un exercice';
+  document.getElementById('exercise-modal').classList.remove('hidden');
+}
+
+// ====== WARMUP EXERCISE CRUD ======
+function editWarmupExercise(i) {
+  modalMode = 'warmup';
+  editingWarmupIndex = i;
+  const ex = warmupExercises[i];
+  document.getElementById('ex-type-group').classList.remove('hidden');
+  document.getElementById('ex-type').value = ex.Type || 'Échauffement';
+  document.getElementById('ex-name').value = ex.Nom;
+  document.getElementById('ex-goal').value = ex.Objectif;
+  document.getElementById('ex-difficulty').value = ex.Difficulté;
+  document.getElementById('ex-equipment').value = 'Aucun';
+  document.getElementById('ex-intensity').value = ex.Intensité;
+  document.getElementById('modal-title').textContent = 'Modifier l\'exercice';
+  document.getElementById('exercise-modal').classList.remove('hidden');
+}
+
+function deleteWarmupExercise(i) {
+  warmupExercises.splice(i, 1);
+  saveWarmupExercises();
+  notify('Exercice supprimé', 'info');
+}
+
+function openAddWarmupModal() {
+  modalMode = 'warmup';
+  editingWarmupIndex = -1;
+  document.getElementById('ex-type-group').classList.remove('hidden');
+  document.getElementById('ex-type').value = 'Échauffement';
+  document.getElementById('ex-name').value = '';
+  document.getElementById('ex-goal').value = 'Push';
+  document.getElementById('ex-difficulty').value = 'Débutant';
+  document.getElementById('ex-equipment').value = 'Aucun';
+  document.getElementById('ex-intensity').value = '1';
+  document.getElementById('modal-title').textContent = 'Ajouter un exercice';
+  document.getElementById('exercise-modal').classList.remove('hidden');
+}
+
+// ====== MODALS ======
+document.getElementById('add-exercise-btn').addEventListener('click', openAddModal);
+document.getElementById('add-warmup-btn').addEventListener('click', openAddWarmupModal);
+document.getElementById('modal-cancel').addEventListener('click', () => document.getElementById('exercise-modal').classList.add('hidden'));
+document.getElementById('modal-save').addEventListener('click', () => {
+  const name = document.getElementById('ex-name').value.trim();
+  if (!name) { notify('Le nom est requis', 'error'); return; }
+  if (modalMode === 'exercise') {
+    const ex = {
+      Nom: name,
+      Objectif: document.getElementById('ex-goal').value,
+      Difficulté: document.getElementById('ex-difficulty').value,
+      Équipement: document.getElementById('ex-equipment').value,
+      Intensité: document.getElementById('ex-intensity').value,
+    };
+    if (editingIndex >= 0) exercises[editingIndex] = ex;
+    else exercises.push(ex);
+    saveExercises();
+  } else {
+    const ex = {
+      Nom: name,
+      Type: document.getElementById('ex-type').value,
+      Objectif: document.getElementById('ex-goal').value,
+      Difficulté: document.getElementById('ex-difficulty').value,
+      Intensité: document.getElementById('ex-intensity').value,
+    };
+    if (editingWarmupIndex >= 0) warmupExercises[editingWarmupIndex] = ex;
+    else warmupExercises.push(ex);
+    saveWarmupExercises();
+  }
+  document.getElementById('exercise-modal').classList.add('hidden');
+  notify(editingIndex >= 0 || editingWarmupIndex >= 0 ? 'Exercice modifié' : 'Exercice ajouté');
+});
+
+document.getElementById('export-csv-btn').addEventListener('click', () => {
+  csvMode = 'exercise';
+  document.getElementById('csv-modal-title').textContent = 'Exporter la base d\'exercices';
+  document.getElementById('csv-modal-desc').textContent = 'Copiez ce texte pour sauvegarder votre base.';
+  document.getElementById('csv-text').value = toCSV(exercises, ['Nom', 'Objectif', 'Difficulté', 'Équipement', 'Intensité']);
+  document.getElementById('csv-modal').classList.remove('hidden');
+});
+document.getElementById('import-csv-btn').addEventListener('click', () => {
+  csvMode = 'exercise';
+  document.getElementById('csv-modal-title').textContent = 'Importer une base d\'exercices';
+  document.getElementById('csv-modal-desc').textContent = 'Collez votre CSV pour remplacer la base actuelle.';
+  document.getElementById('csv-text').value = '';
+  document.getElementById('csv-modal').classList.remove('hidden');
+});
+document.getElementById('export-warmup-btn').addEventListener('click', () => {
+  csvMode = 'warmup';
+  document.getElementById('csv-modal-title').textContent = 'Exporter la base d\'échauffement';
+  document.getElementById('csv-modal-desc').textContent = 'Copiez ce texte pour sauvegarder votre base.';
+  document.getElementById('csv-text').value = toCSV(warmupExercises, ['Nom', 'Type', 'Objectif', 'Difficulté', 'Intensité']);
+  document.getElementById('csv-modal').classList.remove('hidden');
+});
+document.getElementById('import-warmup-btn').addEventListener('click', () => {
+  csvMode = 'warmup';
+  document.getElementById('csv-modal-title').textContent = 'Importer une base d\'échauffement';
+  document.getElementById('csv-modal-desc').textContent = 'Collez votre CSV pour remplacer la base actuelle.';
+  document.getElementById('csv-text').value = '';
+  document.getElementById('csv-modal').classList.remove('hidden');
+});
+document.getElementById('csv-cancel').addEventListener('click', () => document.getElementById('csv-modal').classList.add('hidden'));
+document.getElementById('csv-apply').addEventListener('click', () => {
+  const text = document.getElementById('csv-text').value.trim();
+  if (!text) { notify('Collez d\'abord du texte CSV', 'error'); return; }
+  const parsed = parseCSV(text);
+  if (parsed.length === 0) { notify('Format CSV invalide', 'error'); return; }
+  if (csvMode === 'exercise') {
+    exercises = parsed;
+    saveExercises();
+  } else {
+    warmupExercises = parsed;
+    saveWarmupExercises();
+  }
+  document.getElementById('csv-modal').classList.add('hidden');
+  notify(`${parsed.length} exercices importés`);
+});
+
+// ====== SUB-TAB SYSTEM ======
+document.querySelectorAll('.sub-tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.sub-tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.subtab-content').forEach(tc => tc.classList.add('hidden'));
+    document.getElementById('subtab-' + btn.dataset.subtab).classList.remove('hidden');
+  });
+});
+
+// ====== GOAL CHECKBOX LOGIC ======
+document.getElementById('goal-group').addEventListener('change', (e) => {
+  if (!e.target.classList.contains('goal-cb')) return;
+  if (e.target.value === 'Full-body' && e.target.checked) {
+    document.querySelectorAll('#goal-group .goal-cb').forEach(cb => { if (cb.value !== 'Full-body') cb.checked = false; });
+  } else if (e.target.value !== 'Full-body' && e.target.checked) {
+    document.getElementById('goal-fullbody').checked = false;
+  }
+  if (document.querySelectorAll('#goal-group .goal-cb:checked').length === 0) {
+    document.getElementById('goal-fullbody').checked = true;
+  }
+});
+
+function getSelectedGoals() {
+  const checked = Array.from(document.querySelectorAll('#goal-group .goal-cb:checked')).map(cb => cb.value);
+  if (checked.includes('Full-body') || checked.length === 0) return ['Push', 'Pull', 'Legs', 'Abdos'];
+  return checked;
+}
+
+// ====== SORT FUNCTIONS ======
+const SORT_FNS = {
+  Nom: (a, b) => a.Nom.localeCompare(b.Nom),
+  Objectif: (a, b) => a.Objectif.localeCompare(b.Objectif),
+  Difficulté: (a, b) => {
+    const o = { Débutant: 0, Intermédiaire: 1, Avancé: 2 };
+    return (o[a.Difficulté] || 0) - (o[b.Difficulté] || 0);
+  },
+  Équipement: (a, b) => (a.Équipement || '').localeCompare(b.Équipement || ''),
+  Intensité: (a, b) => parseInt(a.Intensité) - parseInt(b.Intensité),
+  Type: (a, b) => (a.Type || '').localeCompare(b.Type || ''),
+};
+
+function sortData(data, sortState) {
+  if (!sortState.field) return data;
+  const fn = SORT_FNS[sortState.field];
+  if (!fn) return data;
+  const sorted = [...data].sort(fn);
+  return sortState.dir === 'desc' ? sorted.reverse() : sorted;
+}
+
+function toggleSort(sortState, field) {
+  if (sortState.field === field) sortState.dir = sortState.dir === 'asc' ? 'desc' : 'asc';
+  else { sortState.field = field; sortState.dir = 'asc'; }
+}
+
+// ====== WORKOUT GENERATION ======
+function getGoalRelatedGoals(goal) {
+  if (goal === 'Full-body') return ['Push', 'Pull', 'Legs', 'Abdos'];
+  if (goal === 'Push') return ['Push'];
+  if (goal === 'Pull') return ['Pull'];
+  if (goal === 'Legs') return ['Legs'];
+  if (goal === 'Abdos') return ['Abdos'];
+  if (goal === 'Cardio') return ['Cardio', 'Legs'];
+  return [goal];
+}
+
+function getWarmupForGoal(goal) {
+  const goals = getGoalRelatedGoals(goal);
+  const pool = warmupExercises.filter(e =>
+    (e.Type === 'Échauffement' || !e.Type) &&
+    (goals.includes(e.Objectif) || e.Objectif === 'Full-body')
+  );
+  return shuffleArray(pool.length > 0 ? pool : [{ Nom: 'Rotations articulaires', Objectif: 'Full-body', Difficulté: 'Débutant', Intensité: '1' }]).slice(0, 3 + Math.floor(Math.random() * 2));
+}
+
+function getCooldownForGoal(goal) {
+  const goals = getGoalRelatedGoals(goal);
+  const pool = warmupExercises.filter(e =>
+    e.Type === 'Retour au calme' &&
+    (goals.includes(e.Objectif) || e.Objectif === 'Full-body')
+  );
+  return shuffleArray(pool.length > 0 ? pool : [{ Nom: 'Étirements généraux', Objectif: 'Full-body', Difficulté: 'Débutant', Intensité: '1' }]).slice(0, 2 + Math.floor(Math.random() * 2));
+}
+
+function getExerciseCount(duration) {
+  const map = { 15: 3, 30: 4, 45: 6, 60: 8 };
+  return map[duration] || 4;
+}
+
+function shuffleArray(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+  return a;
+}
+
+function generateWorkout() {
+  const equipment = Array.from(document.querySelectorAll('#equipment-group input:checked')).map(cb => cb.value);
+  const duration = parseInt(document.getElementById('duration').value);
+  const level = document.getElementById('level').value;
+  const goal = document.getElementById('goal').value;
+  const format = document.getElementById('format').value;
+  const alternate = document.getElementById('alternate-intensity').checked;
+  const levelOrder = { 'Débutant': 0, 'Intermédiaire': 1, 'Avancé': 2 };
+  const userLevel = levelOrder[level];
+  const goalGoals = getGoalRelatedGoals(goal);
+
+  let pool = exercises.filter(ex => {
+    if (!goalGoals.includes(ex.Objectif)) return false;
+    if (levelOrder[ex.Difficulté] > userLevel) return false;
+    if (ex.Équipement !== 'Aucun' && !equipment.includes(ex.Équipement)) return false;
+    return true;
+  });
+
+  if (pool.length < 2) {
+    notify('Pas assez d\'exercices correspondant aux filtres. Ajoutez-en dans la base.', 'error');
+    return null;
+  }
+
+  const warmup = getWarmupForGoal(goal);
+  const cooldown = getCooldownForGoal(goal);
+  const count = getExerciseCount(duration);
+  let main = shuffleArray(pool).slice(0, Math.min(count, pool.length));
+
+  if (alternate) {
+    main.sort((a, b) => parseInt(b.Intensité) - parseInt(a.Intensité));
+    const high = main.filter(e => parseInt(e.Intensité) >= 3);
+    const low = main.filter(e => parseInt(e.Intensité) < 3);
+    const alternated = [];
+    let hi = 0, lo = 0;
+    for (let i = 0; i < main.length; i++) {
+      if (i % 2 === 0 && hi < high.length) alternated.push(high[hi++]);
+      else if (lo < low.length) alternated.push(low[lo++]);
+      else if (hi < high.length) alternated.push(high[hi++]);
+      else if (lo < low.length) alternated.push(low[lo++]);
+    }
+    main = alternated;
+  } else {
+    main.sort((a, b) => parseInt(b.Intensité) - parseInt(a.Intensité));
+  }
+
+  return { warmup, main, cooldown, format, goal, duration };
+}
+
+function renderWorkout(workout) {
+  currentWorkout = workout;
+  document.getElementById('results').classList.remove('hidden');
+  document.getElementById('results').classList.add('fade-in');
+
+  const warmupDiv = document.getElementById('warmup-section');
+  warmupDiv.innerHTML = `
+    <div class="card p-5">
+      <h3 class="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+        <i data-lucide="sun" class="w-4 h-4 text-orange-400"></i> Échauffement
+      </h3>
+      <div class="space-y-2">${workout.warmup.map(ex => renderExerciseMini(ex)).join('')}</div>
+    </div>`;
+
+  const mainDiv = document.getElementById('main-section');
+  const formatLabel = { classic: 'Séries × Répétitions', hiit: 'HIIT / Circuit', amrap: 'AMRAP' }[workout.format];
+  mainDiv.innerHTML = `
+    <div class="card p-5">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-sm font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+          <i data-lucide="zap" class="w-4 h-4 text-accent"></i> Corps de séance
+        </h3>
+        <span class="text-xs bg-accent/10 text-accent px-2.5 py-1 rounded-full font-medium">${formatLabel}</span>
+      </div>
+      <div class="space-y-2">${workout.main.map((ex, i) => renderExerciseCard(ex, i)).join('')}</div>
+    </div>`;
+
+  const coolDiv = document.getElementById('cooldown-section');
+  coolDiv.innerHTML = `
+    <div class="card p-5">
+      <h3 class="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+        <i data-lucide="thermometer" class="w-4 h-4 text-blue-400"></i> Retour au calme
+      </h3>
+      <div class="space-y-2">${workout.cooldown.map(ex => renderExerciseMini(ex)).join('')}</div>
+    </div>`;
+
+  lucide.createIcons({ scope: warmupDiv });
+  lucide.createIcons({ scope: mainDiv });
+  lucide.createIcons({ scope: coolDiv });
+
+  renderTimer(workout);
+  renderExport(workout);
+  document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  notify('Séance générée !');
+}
+
+function renderExerciseMini(ex) {
+  return `<div class="flex items-center gap-3 py-2 px-3 bg-slate-800/30 rounded-lg">
+    <i data-lucide="activity" class="w-4 h-4 text-slate-400 flex-shrink-0"></i>
+    <span class="text-sm font-medium text-slate-200">${escHtml(ex.Nom)}</span>
+    <span class="text-xs text-slate-500 ml-auto">${ex.Difficulté || ''} · ${ex.Intensité || ''}/5</span>
+  </div>`;
+}
+
+function renderExerciseCard(ex, index) {
+  const dots = Array(5).fill(0).map((_, j) =>
+    `<span class="${j < parseInt(ex.Intensité) ? 'text-accent' : 'text-slate-700'}">●</span>`
+  ).join('');
+  return `<div class="exercise-card p-4 flex items-center gap-4" data-index="${index}">
+    <div class="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center flex-shrink-0">
+      <span class="text-sm font-bold text-accent">${index + 1}</span>
+    </div>
+    <div class="flex-1 min-w-0">
+      <div class="flex items-center gap-2">
+        <span class="font-medium text-white">${escHtml(ex.Nom)}</span>
+        <span class="text-xs bg-slate-700/50 text-slate-300 px-2 py-0.5 rounded-full">${escHtml(ex.Objectif)}</span>
+      </div>
+      <div class="flex items-center gap-3 mt-1 text-xs text-slate-500">
+        <span>${escHtml(ex.Équipement || 'Aucun')}</span>
+        <span class="tracking-wider">${dots}</span>
+      </div>
+    </div>
+    <button onclick="rerollExercise(${index})" class="btn-ghost p-2 rounded-lg flex-shrink-0" title="Remplacer cet exercice">
+      <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+    </button>
+  </div>`;
+}
+
+function rerollExercise(index) {
+  if (!currentWorkout) return;
+  const equipment = Array.from(document.querySelectorAll('#equipment-group input:checked')).map(cb => cb.value);
+  const level = document.getElementById('level').value;
+  const goal = document.getElementById('goal').value;
+  const levelOrder = { 'Débutant': 0, 'Intermédiaire': 1, 'Avancé': 2 };
+  const userLevel = levelOrder[level];
+  const goalGoals = getGoalRelatedGoals(goal);
+  const currentEx = currentWorkout.main[index];
+
+  let pool = exercises.filter(ex => {
+    if (ex.Nom === currentEx.Nom) return false;
+    if (!goalGoals.includes(ex.Objectif)) return false;
+    if (levelOrder[ex.Difficulté] > userLevel) return false;
+    if (ex.Équipement !== 'Aucun' && !equipment.includes(ex.Équipement)) return false;
+    const usedNames = currentWorkout.main.map(e => e.Nom);
+    if (usedNames.includes(ex.Nom)) return false;
+    return true;
+  });
+
+  if (pool.length === 0) { notify('Aucun exercice alternatif disponible', 'error'); return; }
+
+  currentWorkout.main[index] = pool[Math.floor(Math.random() * pool.length)];
+  const mainDiv = document.getElementById('main-section');
+  const formatLabel = { classic: 'Séries × Répétitions', hiit: 'HIIT / Circuit', amrap: 'AMRAP' }[currentWorkout.format];
+  mainDiv.innerHTML = `
+    <div class="card p-5">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-sm font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+          <i data-lucide="zap" class="w-4 h-4 text-accent"></i> Corps de séance
+        </h3>
+        <span class="text-xs bg-accent/10 text-accent px-2.5 py-1 rounded-full font-medium">${formatLabel}</span>
+      </div>
+      <div class="space-y-2">${currentWorkout.main.map((ex, i) => renderExerciseCard(ex, i)).join('')}</div>
+    </div>`;
+  lucide.createIcons({ scope: mainDiv });
+  notify('Exercice remplacé');
+}
+
+// ====== TIMER ======
+function renderTimer(workout) {
+  const timerDiv = document.getElementById('timer-section');
+  const format = workout.format;
+  let html = `<div class="card p-5">
+    <h3 class="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+      <i data-lucide="clock" class="w-4 h-4 text-accent"></i> Minuteur
+    </h3>
+    <div class="text-center">`;
+
+  if (format === 'classic') {
+    html += `
+      <div class="text-5xl font-bold text-white mb-4 timer-font" id="timer-display">30:00</div>
+      <div class="text-sm text-slate-400 mb-4">Temps total</div>
+      <div class="flex gap-3 justify-center">
+        <button onclick="startClassicTimer(${workout.duration})" class="btn-primary px-6 py-2.5 rounded-lg text-sm flex items-center gap-2" id="timer-start-btn"><i data-lucide="play" class="w-4 h-4"></i> Démarrer</button>
+        <button onclick="pauseTimer()" class="btn-secondary px-4 py-2.5 rounded-lg text-sm hidden" id="timer-pause-btn"><i data-lucide="pause" class="w-4 h-4"></i></button>
+        <button onclick="stopTimer()" class="btn-secondary px-4 py-2.5 rounded-lg text-sm hidden" id="timer-stop-btn"><i data-lucide="square" class="w-4 h-4"></i></button>
+        <button onclick="resetTimerDisplay(${workout.duration})" class="btn-ghost px-3 py-2.5 rounded-lg text-sm hidden" id="timer-reset-btn"><i data-lucide="rotate-ccw" class="w-4 h-4"></i></button>
+      </div>`;
+  } else if (format === 'hiit') {
+    html += `
+      <div class="mb-2"><span class="text-xs font-medium text-slate-400" id="hiit-phase">PRÊT</span></div>
+      <div class="text-5xl font-bold mb-2 timer-font" id="timer-display">00:00</div>
+      <div class="flex items-center justify-center gap-6 text-sm text-slate-400 mb-4">
+        <span>Effort <span class="text-accent font-medium">40s</span></span>
+        <span>Repos <span class="text-red-400 font-medium">20s</span></span>
+      </div>
+      <div class="flex gap-3 justify-center">
+        <button onclick="startHiitTimer()" class="btn-primary px-6 py-2.5 rounded-lg text-sm flex items-center gap-2" id="timer-start-btn"><i data-lucide="play" class="w-4 h-4"></i> Démarrer</button>
+        <button onclick="pauseTimer()" class="btn-secondary px-4 py-2.5 rounded-lg text-sm hidden" id="timer-pause-btn"><i data-lucide="pause" class="w-4 h-4"></i></button>
+        <button onclick="stopTimer()" class="btn-secondary px-4 py-2.5 rounded-lg text-sm hidden" id="timer-stop-btn"><i data-lucide="square" class="w-4 h-4"></i></button>
+      </div>`;
+  } else {
+    html += `
+      <div class="text-5xl font-bold text-white mb-4 timer-font" id="timer-display">${formatTime(workout.duration * 60)}</div>
+      <div class="text-sm text-slate-400 mb-4">AMRAP — Compte à rebours</div>
+      <div class="flex gap-3 justify-center">
+        <button onclick="startAmrapTimer(${workout.duration})" class="btn-primary px-6 py-2.5 rounded-lg text-sm flex items-center gap-2" id="timer-start-btn"><i data-lucide="play" class="w-4 h-4"></i> Démarrer</button>
+        <button onclick="pauseTimer()" class="btn-secondary px-4 py-2.5 rounded-lg text-sm hidden" id="timer-pause-btn"><i data-lucide="pause" class="w-4 h-4"></i></button>
+        <button onclick="stopTimer()" class="btn-secondary px-4 py-2.5 rounded-lg text-sm hidden" id="timer-stop-btn"><i data-lucide="square" class="w-4 h-4"></i></button>
+      </div>`;
+  }
+
+  html += `</div></div>`;
+  timerDiv.innerHTML = html;
+  lucide.createIcons({ scope: timerDiv });
+}
+
+function formatTime(seconds) {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+}
+
+let timerSeconds = 0;
+let timerTotalSeconds = 0;
+let hiitPhase = 'work';
+let hiitWork = 40;
+let hiitRest = 20;
+let hiitRounds = 8;
+let hiitCurrentRound = 0;
+
+function startClassicTimer(duration) {
+  stopTimer();
+  timerTotalSeconds = duration * 60;
+  timerSeconds = 0;
+  timerRunning = true;
+  timerPaused = false;
+  toggleTimerButtons(true);
+  document.getElementById('timer-display').textContent = formatTime(0);
+  timerInterval = setInterval(() => {
+    if (!timerPaused) {
+      timerSeconds++;
+      document.getElementById('timer-display').textContent = formatTime(timerSeconds);
+      if (timerSeconds >= timerTotalSeconds) { stopTimer(); notify('Séance terminée ! 💪', 'success'); playBeep(); }
+    }
+  }, 1000);
+}
+
+function startHiitTimer() {
+  stopTimer();
+  hiitPhase = 'work';
+  hiitCurrentRound = 0;
+  timerRunning = true;
+  timerPaused = false;
+  toggleTimerButtons(true);
+  hiitWork = 40;
+  hiitRest = 20;
+  hiitRounds = Math.max(4, Math.floor((currentWorkout ? currentWorkout.duration : 30) * 60 / (hiitWork + hiitRest)));
+  let counter = hiitWork;
+  updateHiitDisplay('TRAVAIL', counter, 'green');
+  timerInterval = setInterval(() => {
+    if (!timerPaused) {
+      counter--;
+      if (hiitPhase === 'work') {
+        updateHiitDisplay('TRAVAIL', counter, 'green');
+        if (counter <= 0) { hiitPhase = 'rest'; counter = hiitRest; playBeep(); updateHiitDisplay('REPOS', counter, 'red'); }
+      } else {
+        updateHiitDisplay('REPOS', counter, 'red');
+        if (counter <= 0) {
+          hiitCurrentRound++;
+          if (hiitCurrentRound >= hiitRounds) { stopTimer(); notify('HIIT terminé ! 💪', 'success'); playBeep(); return; }
+          hiitPhase = 'work'; counter = hiitWork; playBeep(); updateHiitDisplay('TRAVAIL', counter, 'green');
+        }
+      }
+    }
+  }, 1000);
+}
+
+function updateHiitDisplay(phase, seconds, color) {
+  document.getElementById('hiit-phase').textContent = `${phase} — Round ${hiitCurrentRound + 1}/${hiitRounds}`;
+  const disp = document.getElementById('timer-display');
+  disp.textContent = formatTime(seconds);
+  disp.className = `text-5xl font-bold mb-2 timer-font ${color === 'red' ? 'timer-rest' : 'timer-work'}`;
+}
+
+function startAmrapTimer(duration) {
+  stopTimer();
+  timerTotalSeconds = duration * 60;
+  timerSeconds = timerTotalSeconds;
+  timerRunning = true;
+  timerPaused = false;
+  toggleTimerButtons(true);
+  document.getElementById('timer-display').textContent = formatTime(timerTotalSeconds);
+  timerInterval = setInterval(() => {
+    if (!timerPaused) {
+      timerSeconds--;
+      document.getElementById('timer-display').textContent = formatTime(timerSeconds);
+      if (timerSeconds <= 10 && timerSeconds > 0) playBeep();
+      if (timerSeconds <= 0) { stopTimer(); notify('AMRAP terminé ! 💪', 'success'); playBeep(); }
+    }
+  }, 1000);
+}
+
+function pauseTimer() {
+  timerPaused = !timerPaused;
+  document.getElementById('timer-pause-btn').innerHTML = timerPaused
+    ? '<i data-lucide="play" class="w-4 h-4"></i>'
+    : '<i data-lucide="pause" class="w-4 h-4"></i>';
+  lucide.createIcons({ scope: document.getElementById('timer-pause-btn') });
+}
+
+function stopTimer() {
+  if (timerInterval) clearInterval(timerInterval);
+  timerInterval = null;
+  timerRunning = false;
+  timerPaused = false;
+  toggleTimerButtons(false);
+}
+
+function resetTimerDisplay(duration) {
+  stopTimer();
+  document.getElementById('timer-display').textContent = formatTime(duration * 60);
+  document.getElementById('timer-display').className = 'text-5xl font-bold text-white mb-4 timer-font';
+}
+
+function toggleTimerButtons(running) {
+  ['start', 'pause', 'stop', 'reset'].forEach(id => {
+    const el = document.getElementById(`timer-${id}-btn`);
+    if (el) el.classList.toggle('hidden', id === 'start' ? running : !running);
+  });
+}
+
+function playBeep() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.frequency.value = 800; gain.gain.value = 0.3;
+    osc.start(); gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+    osc.stop(ctx.currentTime + 0.3);
+  } catch (e) { /* silent */ }
+}
+
+// ====== EXPORT ======
+function renderExport(workout) {
+  const exportDiv = document.getElementById('export-section');
+  exportDiv.innerHTML = `
+    <button onclick="exportPDF()" class="btn-secondary flex-1 py-3 rounded-xl text-sm flex items-center justify-center gap-2">
+      <i data-lucide="file-text" class="w-4 h-4"></i> Exporter en PDF
+    </button>
+    <button onclick="exportCSV()" class="btn-secondary flex-1 py-3 rounded-xl text-sm flex items-center justify-center gap-2">
+      <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Exporter en CSV
+    </button>`;
+  lucide.createIcons({ scope: exportDiv });
+}
+
+function exportPDF() { window.print(); }
+
+function exportCSV() {
+  if (!currentWorkout) return;
+  const lines = ['Type,Nom,Objectif,Difficulté,Intensité'];
+  currentWorkout.warmup.forEach(ex => lines.push(`Échauffement,${ex.Nom},${ex.Objectif},${ex.Difficulté || ''},${ex.Intensité || ''}`));
+  currentWorkout.main.forEach(ex => lines.push(`Principal,${ex.Nom},${ex.Objectif},${ex.Difficulté},${ex.Intensité}`));
+  currentWorkout.cooldown.forEach(ex => lines.push(`Retour au calme,${ex.Nom},${ex.Objectif},${ex.Difficulté || ''},${ex.Intensité || ''}`));
+  const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `seance-calisthenics-${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  notify('Fichier CSV téléchargé');
+}
+
+// ====== TAB SYSTEM ======
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.tab-content').forEach(tc => tc.classList.add('hidden'));
+    document.getElementById('tab-' + btn.dataset.tab).classList.remove('hidden');
+  });
+});
+
+// ====== GENERATE BUTTON ======
+document.getElementById('generate-btn').addEventListener('click', () => {
+  stopTimer();
+  const workout = generateWorkout();
+  if (workout) renderWorkout(workout);
+});
+
+// ====== INIT ======
+loadExercises();
+loadWarmupExercises();
+lucide.createIcons();
+</script>
+</body>
+</html>
