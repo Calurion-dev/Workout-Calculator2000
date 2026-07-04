@@ -90,15 +90,21 @@ input[type="checkbox"] { accent-color: #22c55e; }
   </header>
 
   <div class="flex gap-1 mb-6 no-print border-b border-slate-800">
-    <button class="tab-btn active flex items-center gap-2 px-5 py-3 text-sm font-medium text-slate-400 border-b-2 border-transparent transition-all" data-tab="config">
-      <i data-lucide="sliders" class="w-4 h-4"></i> Configuration
+    <button class="tab-btn active flex items-center gap-2 px-5 py-3 text-sm font-medium text-slate-400 border-b-2 border-transparent transition-all" data-tab="config-session">
+      <i data-lucide="sliders" class="w-4 h-4"></i> Configurer ma séance
+    </button>
+    <button class="tab-btn flex items-center gap-2 px-5 py-3 text-sm font-medium text-slate-400 border-b-2 border-transparent transition-all" data-tab="config-week">
+      <i data-lucide="calendar" class="w-4 h-4"></i> Planifier ma semaine
     </button>
     <button class="tab-btn flex items-center gap-2 px-5 py-3 text-sm font-medium text-slate-400 border-b-2 border-transparent transition-all" data-tab="database">
       <i data-lucide="database" class="w-4 h-4"></i> Base d'exercices
     </button>
+    <button class="tab-btn flex items-center gap-2 px-5 py-3 text-sm font-medium text-slate-400 border-b-2 border-transparent transition-all" data-tab="timer">
+      <i data-lucide="clock" class="w-4 h-4"></i> Minuteur
+    </button>
   </div>
 
-  <div id="tab-config" class="tab-content">
+  <div id="tab-config-session" class="tab-content">
     <div class="card p-6 mb-6">
       <h2 class="text-lg font-semibold text-white mb-5 flex items-center gap-2">
         <i data-lucide="settings" class="w-5 h-5 text-accent"></i>
@@ -119,21 +125,18 @@ input[type="checkbox"] { accent-color: #22c55e; }
 
         <div class="space-y-4">
           <div>
-            <label class="block text-sm font-medium text-slate-300 mb-2">Durée</label>
-            <select id="duration" class="w-full">
-              <option value="15">15 min</option>
-              <option value="30" selected>30 min</option>
-              <option value="45">45 min</option>
-              <option value="60">60 min</option>
-            </select>
+            <label class="block text-sm font-medium text-slate-300 mb-2">Durée : <span id="duration-value">30 min</span></label>
+            <input type="range" id="duration" min="10" max="60" value="30" step="1" class="w-full accent-accent">
+            <div class="flex justify-between text-[10px] text-slate-600 mt-0.5 px-0.5">
+              <span>10</span><span>15</span><span>20</span><span>25</span><span>30</span><span>35</span><span>40</span><span>45</span><span>50</span><span>55</span><span>60</span>
+            </div>
           </div>
           <div>
-            <label class="block text-sm font-medium text-slate-300 mb-2">Niveau</label>
-            <select id="level" class="w-full">
-              <option value="Débutant">Débutant</option>
-              <option value="Intermédiaire" selected>Intermédiaire</option>
-              <option value="Avancé">Avancé</option>
-            </select>
+            <label class="block text-sm font-medium text-slate-300 mb-2">Niveau : <span id="level-value">Intermédiaire</span></label>
+            <input type="range" id="level" min="0" max="2" value="1" step="1" class="w-full accent-accent">
+            <div class="flex justify-between text-[10px] text-slate-600 mt-0.5 px-0.5">
+              <span>Débutant</span><span>Intermédiaire</span><span>Avancé</span>
+            </div>
           </div>
         </div>
 
@@ -157,6 +160,7 @@ input[type="checkbox"] { accent-color: #22c55e; }
             <option value="classic">Classique (Séries x Répétitions)</option>
             <option value="hiit">HIIT / Circuit</option>
             <option value="amrap">AMRAP</option>
+            <option value="emom">EMOM (Every Minute On the Minute)</option>
           </select>
         </div>
       </div>
@@ -178,8 +182,16 @@ input[type="checkbox"] { accent-color: #22c55e; }
       <div id="warmup-section"></div>
       <div id="main-section"></div>
       <div id="cooldown-section"></div>
-      <div id="timer-section" class="no-print"></div>
       <div id="export-section" class="no-print flex gap-3"></div>
+    </div>
+  </div>
+
+  <div id="tab-config-week" class="tab-content hidden">
+    <div class="card p-6">
+      <div class="flex flex-col items-center justify-center py-12 text-slate-500">
+        <i data-lucide="calendar" class="w-12 h-12 mb-4 text-slate-600"></i>
+        <p class="text-sm">Planification hebdomadaire à venir...</p>
+      </div>
     </div>
   </div>
 
@@ -213,6 +225,7 @@ input[type="checkbox"] { accent-color: #22c55e; }
               <tr class="text-slate-400 border-b border-slate-800">
                 <th class="text-left py-3 px-2 font-medium sort-btn" data-sort="Nom">Nom</th>
                 <th class="text-left py-3 px-2 font-medium sort-btn" data-sort="Objectif">Objectif</th>
+                <th class="text-left py-3 px-2 font-medium sort-btn" data-sort="Muscles">Muscles</th>
                 <th class="text-left py-3 px-2 font-medium sort-btn" data-sort="Difficulté">Difficulté</th>
                 <th class="text-left py-3 px-2 font-medium sort-btn" data-sort="Équipement">Équipement</th>
                 <th class="text-left py-3 px-2 font-medium sort-btn" data-sort="Intensité">Intensité</th>
@@ -248,6 +261,7 @@ input[type="checkbox"] { accent-color: #22c55e; }
                 <th class="text-left py-3 px-2 font-medium sort-btn" data-sort="Nom">Nom</th>
                 <th class="text-left py-3 px-2 font-medium sort-btn" data-sort="Type">Type</th>
                 <th class="text-left py-3 px-2 font-medium sort-btn" data-sort="Objectif">Objectif</th>
+                <th class="text-left py-3 px-2 font-medium sort-btn" data-sort="Muscles">Muscles</th>
                 <th class="text-left py-3 px-2 font-medium sort-btn" data-sort="Difficulté">Difficulté</th>
                 <th class="text-left py-3 px-2 font-medium sort-btn" data-sort="Intensité">Intensité</th>
                 <th class="text-right py-3 px-2 font-medium">Actions</th>
@@ -255,9 +269,29 @@ input[type="checkbox"] { accent-color: #22c55e; }
             </thead>
             <tbody id="warmup-table-body"></tbody>
           </table>
-        </div>
+    </div>
+  </div>
+
+  <div id="tab-timer" class="tab-content hidden">
+    <div id="timer-placeholder" class="card p-6">
+      <div class="flex flex-col items-center justify-center py-12 text-slate-500">
+        <i data-lucide="clock" class="w-12 h-12 mb-4 text-slate-600"></i>
+        <p class="text-sm">Générez d'abord une séance pour utiliser le minuteur.</p>
       </div>
     </div>
+    <div id="timer-ui" class="hidden grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div class="lg:col-span-1 card p-4">
+        <h3 class="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+          <i data-lucide="list" class="w-4 h-4 text-accent"></i> Exercices
+        </h3>
+        <div id="timer-exercise-list" class="space-y-1 max-h-[70vh] overflow-y-auto pr-1"></div>
+      </div>
+      <div class="lg:col-span-2 card p-6 flex flex-col items-center justify-center">
+        <div id="timer-content" class="w-full text-center"></div>
+      </div>
+    </div>
+  </div>
+</div>
   </div>
 </div>
 
@@ -293,6 +327,9 @@ input[type="checkbox"] { accent-color: #22c55e; }
       <div><label class="block text-xs font-medium text-slate-400 mb-1">Intensité (1-5)</label>
         <input id="ex-intensity" type="number" min="1" max="5" value="2" class="w-full">
       </div>
+      <div><label class="block text-xs font-medium text-slate-400 mb-1">Muscles travaillés</label>
+        <input id="ex-muscles" class="w-full" placeholder="ex: Pectoraux, Épaules, Triceps">
+      </div>
     </div>
     <div class="flex gap-3 mt-5">
       <button id="modal-cancel" class="btn-secondary flex-1 py-2.5 rounded-lg text-sm">Annuler</button>
@@ -315,84 +352,84 @@ input[type="checkbox"] { accent-color: #22c55e; }
 
 <script>
 // ====== DEFAULT DATABASES ======
-const DEFAULT_CSV = `Nom,Objectif,Difficulté,Équipement,Intensité
-Pompes standard,Push,Débutant,Aucun,2
-Pompes diamant,Push,Intermédiaire,Aucun,3
-Pompes larges,Push,Débutant,Aucun,2
-Pompes déclinées,Push,Intermédiaire,Aucun,3
-Pompes piquées,Push,Intermédiaire,Aucun,4
-Pompes sur poignets,Push,Intermédiaire,Aucun,3
-Pompes archer,Push,Avancé,Aucun,5
-Pompes japonaise,Push,Avancé,Aucun,5
-Pompes main levée,Push,Avancé,Aucun,4
-Dips entre chaises,Push,Intermédiaire,Aucun,3
-Dips parallèles,Push,Intermédiaire,Barre à dips,4
-Dips lestés,Push,Avancé,Barre à dips,5
-Dips anneaux,Push,Avancé,Barre à dips,5
-Tractions prise large,Pull,Intermédiaire,Barre de traction,4
-Tractions prise serrée,Pull,Intermédiaire,Barre de traction,4
-Tractions pronation,Pull,Intermédiaire,Barre de traction,4
-Tractions supination,Pull,Intermédiaire,Barre de traction,3
-Tractions neutre,Pull,Intermédiaire,Barre de traction,3
-Tractions archer,Pull,Avancé,Barre de traction,5
-Muscle-ups,Pull,Avancé,Barre de traction,5
-Rowing australien,Pull,Débutant,Barre de traction,2
-Rowing inversé,Pull,Intermédiaire,Barre de traction,3
-Tractions lestées,Pull,Avancé,Barre de traction,5
-Squats poids du corps,Legs,Débutant,Aucun,2
-Squats bulgares,Legs,Intermédiaire,Aucun,3
-Fentes avant,Legs,Débutant,Aucun,2
-Fentes sautées,Legs,Intermédiaire,Aucun,3
-Pistol squats,Legs,Avancé,Aucun,5
-Ponts fessiers,Legs,Débutant,Aucun,1
-Relevés de mollets,Legs,Débutant,Aucun,1
-Sauts groupés,Legs,Intermédiaire,Aucun,3
-Step-ups,Legs,Débutant,Aucun,2
-Nordic curls,Legs,Avancé,Élastique,5
-Squats sautés,Legs,Intermédiaire,Aucun,3
-Crunches,Abdos,Débutant,Aucun,1
-Relevés de jambes,Abdos,Intermédiaire,Aucun,3
-Gainage ventral,Abdos,Débutant,Aucun,2
-Gainage latéral,Abdos,Débutant,Aucun,2
-Russian twists,Abdos,Intermédiaire,Aucun,2
-Dragon flag,Abdos,Avancé,Aucun,5
-V-ups,Abdos,Intermédiaire,Aucun,3
-Mountain climbers,Abdos,Débutant,Aucun,2
-Hollow body hold,Abdos,Intermédiaire,Aucun,3
-Bicycle crunches,Abdos,Intermédiaire,Aucun,2
-Planche avant,Abdos,Avancé,Aucun,5
-Burpees,Cardio,Intermédiaire,Aucun,4
-Jumping jacks,Cardio,Débutant,Aucun,1
-Genoux hauts,Cardio,Débutant,Aucun,2
-Box jumps,Cardio,Intermédiaire,Aucun,3
-Jump rope,Cardio,Intermédiaire,Aucun,2
-Mountain climbers vitesse,Cardio,Intermédiaire,Aucun,3`;
+const DEFAULT_CSV = `Nom,Objectif,Difficulté,Équipement,Intensité,Muscles
+Pompes standard,Push,Débutant,Aucun,2,Pectoraux · Épaules · Triceps
+Pompes diamant,Push,Intermédiaire,Aucun,3,Triceps · Pectoraux
+Pompes larges,Push,Débutant,Aucun,2,Pectoraux
+Pompes déclinées,Push,Intermédiaire,Aucun,3,Pectoraux sup · Épaules
+Pompes piquées,Push,Intermédiaire,Aucun,4,Épaules · Triceps
+Pompes sur poignets,Push,Intermédiaire,Aucun,3,Pectoraux · Épaules · Triceps
+Pompes archer,Push,Avancé,Aucun,5,Pectoraux · Épaules · Triceps · Core
+Pompes japonaise,Push,Avancé,Aucun,5,Triceps · Pectoraux
+Pompes main levée,Push,Avancé,Aucun,4,Pectoraux · Épaules · Triceps
+Dips entre chaises,Push,Intermédiaire,Aucun,3,Triceps · Pectoraux
+Dips parallèles,Push,Intermédiaire,Barre à dips,4,Triceps · Pectoraux
+Dips lestés,Push,Avancé,Barre à dips,5,Triceps · Pectoraux
+Dips anneaux,Push,Avancé,Barre à dips,5,Triceps · Pectoraux · Core
+Tractions prise large,Pull,Intermédiaire,Barre de traction,4,Dorsaux · Biceps
+Tractions prise serrée,Pull,Intermédiaire,Barre de traction,4,Dorsaux · Biceps
+Tractions pronation,Pull,Intermédiaire,Barre de traction,4,Dorsaux · Biceps · Avant-bras
+Tractions supination,Pull,Intermédiaire,Barre de traction,3,Dorsaux · Biceps
+Tractions neutre,Pull,Intermédiaire,Barre de traction,3,Dorsaux · Biceps
+Tractions archer,Pull,Avancé,Barre de traction,5,Dorsaux · Biceps · Core
+Muscle-ups,Pull,Avancé,Barre de traction,5,Dorsaux · Triceps · Pectoraux
+Rowing australien,Pull,Débutant,Barre de traction,2,Dorsaux · Biceps
+Rowing inversé,Pull,Intermédiaire,Barre de traction,3,Dorsaux · Biceps
+Tractions lestées,Pull,Avancé,Barre de traction,5,Dorsaux · Biceps · Avant-bras
+Squats poids du corps,Legs,Débutant,Aucun,2,Cuisses · Fessiers
+Squats bulgares,Legs,Intermédiaire,Aucun,3,Cuisses · Fessiers
+Fentes avant,Legs,Débutant,Aucun,2,Cuisses · Fessiers
+Fentes sautées,Legs,Intermédiaire,Aucun,3,Cuisses · Fessiers · Mollets
+Pistol squats,Legs,Avancé,Aucun,5,Cuisses · Fessiers · Core
+Ponts fessiers,Legs,Débutant,Aucun,1,Fessiers · Lombaires
+Relevés de mollets,Legs,Débutant,Aucun,1,Mollets
+Sauts groupés,Legs,Intermédiaire,Aucun,3,Cuisses · Mollets · Core
+Step-ups,Legs,Débutant,Aucun,2,Cuisses · Fessiers
+Nordic curls,Legs,Avancé,Élastique,5,Ischio-jambiers · Fessiers
+Squats sautés,Legs,Intermédiaire,Aucun,3,Cuisses · Fessiers · Mollets
+Crunches,Abdos,Débutant,Aucun,1,Abdominaux
+Relevés de jambes,Abdos,Intermédiaire,Aucun,3,Abdominaux · Fléchisseurs
+Gainage ventral,Abdos,Débutant,Aucun,2,Core · Abdominaux
+Gainage latéral,Abdos,Débutant,Aucun,2,Obliques · Core
+Russian twists,Abdos,Intermédiaire,Aucun,2,Obliques · Abdominaux
+Dragon flag,Abdos,Avancé,Aucun,5,Abdominaux · Core · Lombaires
+V-ups,Abdos,Intermédiaire,Aucun,3,Abdominaux · Fléchisseurs
+Mountain climbers,Abdos,Débutant,Aucun,2,Abdominaux · Cuisses
+Hollow body hold,Abdos,Intermédiaire,Aucun,3,Core · Abdominaux
+Bicycle crunches,Abdos,Intermédiaire,Aucun,2,Obliques · Abdominaux
+Planche avant,Abdos,Avancé,Aucun,5,Core · Abdominaux · Lombaires
+Burpees,Cardio,Intermédiaire,Aucun,4,Full-body
+Jumping jacks,Cardio,Débutant,Aucun,1,Full-body
+Genoux hauts,Cardio,Débutant,Aucun,2,Cuisses · Core
+Box jumps,Cardio,Intermédiaire,Aucun,3,Cuisses · Mollets · Core
+Jump rope,Cardio,Intermédiaire,Aucun,2,Mollets · Cuisses
+Mountain climbers vitesse,Cardio,Intermédiaire,Aucun,3,Abdominaux · Cuisses`;
 
-const DEFAULT_WARMUP_CSV = `Nom,Type,Objectif,Difficulté,Intensité
-Cercles de bras,Échauffement,Push,Débutant,1
-Rotations d'épaules,Échauffement,Push,Débutant,1
-Rotations de hanches,Échauffement,Legs,Débutant,1
-Rotations de chevilles,Échauffement,Legs,Débutant,1
-Rotations du cou,Échauffement,Full-body,Débutant,1
-Mobilité des poignets,Échauffement,Push,Débutant,1
-Étirement chat-vache,Échauffement,Full-body,Débutant,1
-Balancements de jambes,Échauffement,Legs,Débutant,1
-Rotations du tronc,Échauffement,Full-body,Débutant,1
-Pompes inclinées légères,Échauffement,Push,Débutant,1
-Squats à vide,Échauffement,Legs,Débutant,1
-Fentes légères,Échauffement,Legs,Débutant,1
-Étirement ischio-jambiers,Retour au calme,Legs,Débutant,1
-Étirement quadriceps,Retour au calme,Legs,Débutant,1
-Étirement pectoraux,Retour au calme,Push,Débutant,1
-Étirement triceps,Retour au calme,Push,Débutant,1
-Étirement dorsaux,Retour au calme,Pull,Débutant,1
-Papillon,Retour au calme,Legs,Débutant,1
-Posture de l'enfant,Retour au calme,Full-body,Débutant,1
-Étirement épaules,Retour au calme,Push,Débutant,1
-Étirement cou,Retour au calme,Full-body,Débutant,1
-Étirement adducteurs,Retour au calme,Legs,Débutant,1
-Étirement lombaires,Retour au calme,Full-body,Débutant,1
-Étirement grand dorsal,Retour au calme,Pull,Débutant,1`;
+const DEFAULT_WARMUP_CSV = `Nom,Type,Objectif,Difficulté,Intensité,Muscles
+Cercles de bras,Échauffement,Push,Débutant,1,Épaules · Bras
+Rotations d'épaules,Échauffement,Push,Débutant,1,Épaules
+Rotations de hanches,Échauffement,Legs,Débutant,1,Hanches · Lombaires
+Rotations de chevilles,Échauffement,Legs,Débutant,1,Chevilles · Mollets
+Rotations du cou,Échauffement,Full-body,Débutant,1,Cou
+Mobilité des poignets,Échauffement,Push,Débutant,1,Poignets · Avant-bras
+Étirement chat-vache,Échauffement,Full-body,Débutant,1,Dos · Core
+Balancements de jambes,Échauffement,Legs,Débutant,1,Cuisses · Hanches
+Rotations du tronc,Échauffement,Full-body,Débutant,1,Tronc · Obliques
+Pompes inclinées légères,Échauffement,Push,Débutant,1,Pectoraux · Épaules
+Squats à vide,Échauffement,Legs,Débutant,1,Cuisses · Fessiers
+Fentes légères,Échauffement,Legs,Débutant,1,Cuisses · Fessiers
+Étirement ischio-jambiers,Retour au calme,Legs,Débutant,1,Ischio-jambiers
+Étirement quadriceps,Retour au calme,Legs,Débutant,1,Quadriceps
+Étirement pectoraux,Retour au calme,Push,Débutant,1,Pectoraux
+Étirement triceps,Retour au calme,Push,Débutant,1,Triceps
+Étirement dorsaux,Retour au calme,Pull,Débutant,1,Dorsaux
+Papillon,Retour au calme,Legs,Débutant,1,Adducteurs · Hanches
+Posture de l'enfant,Retour au calme,Full-body,Débutant,1,Dos · Épaules
+Étirement épaules,Retour au calme,Push,Débutant,1,Épaules
+Étirement cou,Retour au calme,Full-body,Débutant,1,Cou
+Étirement adducteurs,Retour au calme,Legs,Débutant,1,Adducteurs
+Étirement lombaires,Retour au calme,Full-body,Débutant,1,Lombaires
+Étirement grand dorsal,Retour au calme,Pull,Débutant,1,Dorsaux`;
 
 // ====== STATE ======
 let exercises = [];
@@ -407,6 +444,8 @@ let timerRunning = false;
 let timerPaused = false;
 let sortMain = { field: null, dir: 'asc' };
 let sortWarmup = { field: null, dir: 'asc' };
+const DURATION_VALUES = [10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60];
+const INTENSITY_COLORS = ['text-emerald-400', 'text-lime-400', 'text-yellow-400', 'text-orange-400', 'text-red-400'];
 
 // ====== NOTIFICATIONS ======
 function notify(msg, type = 'success') {
@@ -435,9 +474,28 @@ function parseCSV(text) {
 }
 
 function toCSV(data, headers) {
-  const h = headers || ['Nom', 'Objectif', 'Difficulté', 'Équipement', 'Intensité'];
+  const h = headers || ['Nom', 'Objectif', 'Difficulté', 'Équipement', 'Intensité', 'Muscles'];
   const rows = data.map(e => h.map(k => e[k] || '').join(','));
   return h.join(',') + '\n' + rows.join('\n');
+}
+
+function getDefaultMuscles(objectif, nom) {
+  const byGoal = {
+    'Push': 'Pectoraux, Épaules, Triceps',
+    'Pull': 'Dorsaux, Biceps, Avant-bras',
+    'Legs': 'Cuisses, Fessiers, Mollets',
+    'Abdos': 'Abdominaux, Core',
+    'Cardio': 'Full-body',
+    'Full-body': 'Général',
+    'Échauffement': 'Général',
+    'Retour au calme': 'Général',
+  };
+  return byGoal[objectif] || '';
+}
+
+function fillDefaultMuscles(arr) {
+  arr.forEach(e => { if (!e.Muscles) e.Muscles = getDefaultMuscles(e.Objectif, e.Nom); });
+  return arr;
 }
 
 // ====== LOCAL STORAGE - MAIN EXERCISES ======
@@ -445,6 +503,7 @@ function loadExercises() {
   const saved = localStorage.getItem('calisthenics_exercises');
   if (saved) { try { exercises = JSON.parse(saved); } catch (e) { exercises = parseCSV(DEFAULT_CSV); } }
   else { exercises = parseCSV(DEFAULT_CSV); }
+  fillDefaultMuscles(exercises);
   updateCounts();
   renderTable();
 }
@@ -460,6 +519,7 @@ function loadWarmupExercises() {
   const saved = localStorage.getItem('calisthenics_warmup');
   if (saved) { try { warmupExercises = JSON.parse(saved); } catch (e) { warmupExercises = parseCSV(DEFAULT_WARMUP_CSV); } }
   else { warmupExercises = parseCSV(DEFAULT_WARMUP_CSV); }
+  fillDefaultMuscles(warmupExercises);
   updateCounts();
   renderWarmupTable();
 }
@@ -481,11 +541,12 @@ function renderTable() {
   const tbody = document.getElementById('exercise-table-body');
   tbody.innerHTML = sorted.map((ex, i) => {
     const dots = Array(5).fill(0).map((_, j) =>
-      `<span class="${j < parseInt(ex.Intensité) ? 'text-accent' : 'text-slate-700'}">●</span>`
+      `<span class="${j < parseInt(ex.Intensité) ? INTENSITY_COLORS[j] || 'text-accent' : 'text-slate-700'}">●</span>`
     ).join('');
     return `<tr class="border-b border-slate-800 hover:bg-slate-800/40 transition">
       <td class="py-3 px-2 text-white font-medium">${escHtml(ex.Nom)}</td>
       <td class="py-3 px-2">${escHtml(ex.Objectif)}</td>
+      <td class="py-3 px-2 text-slate-400 text-xs max-w-[160px] truncate" title="${escHtml(ex.Muscles || '')}">${escHtml(ex.Muscles || '')}</td>
       <td class="py-3 px-2">${escHtml(ex.Difficulté)}</td>
       <td class="py-3 px-2 text-slate-400">${escHtml(ex.Équipement)}</td>
       <td class="py-3 px-2 text-sm tracking-wider">${dots}</td>
@@ -504,13 +565,14 @@ function renderWarmupTable() {
   const tbody = document.getElementById('warmup-table-body');
   tbody.innerHTML = sorted.map((ex, i) => {
     const dots = Array(5).fill(0).map((_, j) =>
-      `<span class="${j < parseInt(ex.Intensité) ? 'text-accent' : 'text-slate-700'}">●</span>`
+      `<span class="${j < parseInt(ex.Intensité) ? INTENSITY_COLORS[j] || 'text-accent' : 'text-slate-700'}">●</span>`
     ).join('');
     const typeColor = ex.Type === 'Échauffement' ? 'text-orange-400' : 'text-blue-400';
     return `<tr class="border-b border-slate-800 hover:bg-slate-800/40 transition">
       <td class="py-3 px-2 text-white font-medium">${escHtml(ex.Nom)}</td>
       <td class="py-3 px-2"><span class="${typeColor}">${escHtml(ex.Type)}</span></td>
       <td class="py-3 px-2">${escHtml(ex.Objectif)}</td>
+      <td class="py-3 px-2 text-slate-400 text-xs max-w-[160px] truncate" title="${escHtml(ex.Muscles || '')}">${escHtml(ex.Muscles || '')}</td>
       <td class="py-3 px-2">${escHtml(ex.Difficulté)}</td>
       <td class="py-3 px-2 text-sm tracking-wider">${dots}</td>
       <td class="py-3 px-2 text-right">
@@ -535,6 +597,7 @@ function editExercise(i) {
   document.getElementById('ex-difficulty').value = ex.Difficulté;
   document.getElementById('ex-equipment').value = ex.Équipement;
   document.getElementById('ex-intensity').value = ex.Intensité;
+  document.getElementById('ex-muscles').value = ex.Muscles || '';
   document.getElementById('modal-title').textContent = 'Modifier l\'exercice';
   document.getElementById('exercise-modal').classList.remove('hidden');
 }
@@ -554,6 +617,7 @@ function openAddModal() {
   document.getElementById('ex-difficulty').value = 'Débutant';
   document.getElementById('ex-equipment').value = 'Aucun';
   document.getElementById('ex-intensity').value = '3';
+  document.getElementById('ex-muscles').value = '';
   document.getElementById('modal-title').textContent = 'Ajouter un exercice';
   document.getElementById('exercise-modal').classList.remove('hidden');
 }
@@ -570,6 +634,7 @@ function editWarmupExercise(i) {
   document.getElementById('ex-difficulty').value = ex.Difficulté;
   document.getElementById('ex-equipment').value = 'Aucun';
   document.getElementById('ex-intensity').value = ex.Intensité;
+  document.getElementById('ex-muscles').value = ex.Muscles || '';
   document.getElementById('modal-title').textContent = 'Modifier l\'exercice';
   document.getElementById('exercise-modal').classList.remove('hidden');
 }
@@ -590,6 +655,7 @@ function openAddWarmupModal() {
   document.getElementById('ex-difficulty').value = 'Débutant';
   document.getElementById('ex-equipment').value = 'Aucun';
   document.getElementById('ex-intensity').value = '1';
+  document.getElementById('ex-muscles').value = '';
   document.getElementById('modal-title').textContent = 'Ajouter un exercice';
   document.getElementById('exercise-modal').classList.remove('hidden');
 }
@@ -601,6 +667,7 @@ document.getElementById('modal-cancel').addEventListener('click', () => document
 document.getElementById('modal-save').addEventListener('click', () => {
   const name = document.getElementById('ex-name').value.trim();
   if (!name) { notify('Le nom est requis', 'error'); return; }
+  const muscles = document.getElementById('ex-muscles').value.trim();
   if (modalMode === 'exercise') {
     const ex = {
       Nom: name,
@@ -608,6 +675,7 @@ document.getElementById('modal-save').addEventListener('click', () => {
       Difficulté: document.getElementById('ex-difficulty').value,
       Équipement: document.getElementById('ex-equipment').value,
       Intensité: document.getElementById('ex-intensity').value,
+      Muscles: muscles,
     };
     if (editingIndex >= 0) exercises[editingIndex] = ex;
     else exercises.push(ex);
@@ -619,6 +687,7 @@ document.getElementById('modal-save').addEventListener('click', () => {
       Objectif: document.getElementById('ex-goal').value,
       Difficulté: document.getElementById('ex-difficulty').value,
       Intensité: document.getElementById('ex-intensity').value,
+      Muscles: muscles,
     };
     if (editingWarmupIndex >= 0) warmupExercises[editingWarmupIndex] = ex;
     else warmupExercises.push(ex);
@@ -632,7 +701,7 @@ document.getElementById('export-csv-btn').addEventListener('click', () => {
   csvMode = 'exercise';
   document.getElementById('csv-modal-title').textContent = 'Exporter la base d\'exercices';
   document.getElementById('csv-modal-desc').textContent = 'Copiez ce texte pour sauvegarder votre base.';
-  document.getElementById('csv-text').value = toCSV(exercises, ['Nom', 'Objectif', 'Difficulté', 'Équipement', 'Intensité']);
+  document.getElementById('csv-text').value = toCSV(exercises, ['Nom', 'Objectif', 'Difficulté', 'Équipement', 'Intensité', 'Muscles']);
   document.getElementById('csv-modal').classList.remove('hidden');
 });
 document.getElementById('import-csv-btn').addEventListener('click', () => {
@@ -646,7 +715,7 @@ document.getElementById('export-warmup-btn').addEventListener('click', () => {
   csvMode = 'warmup';
   document.getElementById('csv-modal-title').textContent = 'Exporter la base d\'échauffement';
   document.getElementById('csv-modal-desc').textContent = 'Copiez ce texte pour sauvegarder votre base.';
-  document.getElementById('csv-text').value = toCSV(warmupExercises, ['Nom', 'Type', 'Objectif', 'Difficulté', 'Intensité']);
+  document.getElementById('csv-text').value = toCSV(warmupExercises, ['Nom', 'Type', 'Objectif', 'Difficulté', 'Intensité', 'Muscles']);
   document.getElementById('csv-modal').classList.remove('hidden');
 });
 document.getElementById('import-warmup-btn').addEventListener('click', () => {
@@ -728,6 +797,7 @@ const SORT_FNS = {
   Équipement: (a, b) => (a.Équipement || '').localeCompare(b.Équipement || ''),
   Intensité: (a, b) => parseInt(a.Intensité) - parseInt(b.Intensité),
   Type: (a, b) => (a.Type || '').localeCompare(b.Type || ''),
+  Muscles: (a, b) => (a.Muscles || '').localeCompare(b.Muscles || ''),
 };
 
 function sortData(data, sortState) {
@@ -741,6 +811,29 @@ function sortData(data, sortState) {
 function toggleSort(sortState, field) {
   if (sortState.field === field) sortState.dir = sortState.dir === 'asc' ? 'desc' : 'asc';
   else { sortState.field = field; sortState.dir = 'asc'; }
+}
+
+// ====== DURATION SLIDER SNAP ======
+document.getElementById('duration').addEventListener('input', function() {
+  const val = parseInt(this.value);
+  const snapped = DURATION_VALUES.reduce((a, b) => Math.abs(b - val) < Math.abs(a - val) ? b : a);
+  this.value = snapped;
+  document.getElementById('duration-value').textContent = snapped + ' min';
+});
+
+// ====== LEVEL SLIDER ======
+const LEVEL_NAMES = ['Débutant', 'Intermédiaire', 'Avancé'];
+document.getElementById('level').addEventListener('input', function() {
+  document.getElementById('level-value').textContent = LEVEL_NAMES[parseInt(this.value)];
+});
+
+// ====== REPS GENERATION ======
+function generateReps(difficulty, intensity) {
+  const baseReps = { Débutant: [6, 10], Intermédiaire: [8, 15], Avancé: [10, 20] };
+  const [rmin, rmax] = baseReps[difficulty] || [8, 12];
+  const reps = rmin + Math.round((rmax - rmin) * (parseInt(intensity) / 5));
+  const sets = parseInt(intensity) >= 4 ? 4 : parseInt(intensity) >= 2 ? 3 : 2;
+  return `${sets} × ${reps}`;
 }
 
 // ====== WORKOUT GENERATION ======
@@ -761,7 +854,7 @@ function getCooldownForGoal(goals) {
 }
 
 function getExerciseCount(duration) {
-  const map = { 15: 3, 30: 4, 45: 6, 60: 8 };
+  const map = { 10: 2, 15: 3, 20: 3, 25: 4, 30: 4, 35: 5, 40: 5, 45: 6, 50: 6, 55: 7, 60: 8 };
   return map[duration] || 4;
 }
 
@@ -833,7 +926,7 @@ function renderWorkout(workout) {
     </div>`;
 
   const mainDiv = document.getElementById('main-section');
-  const formatLabel = { classic: 'Séries × Répétitions', hiit: 'HIIT / Circuit', amrap: 'AMRAP' }[workout.format];
+  const formatLabel = { classic: 'Classique', hiit: 'HIIT / Circuit', amrap: 'AMRAP', emom: 'EMOM' }[workout.format];
   mainDiv.innerHTML = `
     <div class="card p-5">
       <div class="flex items-center justify-between mb-3">
@@ -865,9 +958,10 @@ function renderWorkout(workout) {
 }
 
 function renderExerciseMini(ex) {
+  const muscles = ex.Muscles ? `<span class="text-[10px] text-slate-500 ml-2">${escHtml(ex.Muscles)}</span>` : '';
   return `<div class="flex items-center gap-3 py-2 px-3 bg-slate-800/30 rounded-lg">
     <i data-lucide="activity" class="w-4 h-4 text-slate-400 flex-shrink-0"></i>
-    <span class="text-sm font-medium text-slate-200">${escHtml(ex.Nom)}</span>
+    <span class="text-sm font-medium text-slate-200">${escHtml(ex.Nom)}</span>${muscles}
     <span class="text-xs text-slate-500 ml-auto">${ex.Difficulté || ''} · ${ex.Intensité || ''}/5</span>
   </div>`;
 }
@@ -876,6 +970,8 @@ function renderExerciseCard(ex, index) {
   const dots = Array(5).fill(0).map((_, j) =>
     `<span class="${j < parseInt(ex.Intensité) ? 'text-accent' : 'text-slate-700'}">●</span>`
   ).join('');
+  const repsLabel = currentWorkout && currentWorkout.format === 'classic' ? `<span class="text-xs text-accent font-medium ml-auto">${generateReps(ex.Difficulté, ex.Intensité)}</span>` : '';
+  const musclesLabel = ex.Muscles ? `<span class="text-[11px] text-slate-500">${escHtml(ex.Muscles)}</span>` : '';
   return `<div class="exercise-card p-4 flex items-center gap-4" data-index="${index}">
     <div class="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center flex-shrink-0">
       <span class="text-sm font-bold text-accent">${index + 1}</span>
@@ -884,11 +980,13 @@ function renderExerciseCard(ex, index) {
       <div class="flex items-center gap-2">
         <span class="font-medium text-white">${escHtml(ex.Nom)}</span>
         <span class="text-xs bg-slate-700/50 text-slate-300 px-2 py-0.5 rounded-full">${escHtml(ex.Objectif)}</span>
+        ${repsLabel}
       </div>
       <div class="flex items-center gap-3 mt-1 text-xs text-slate-500">
         <span>${escHtml(ex.Équipement || 'Aucun')}</span>
         <span class="tracking-wider">${dots}</span>
       </div>
+      ${musclesLabel ? `<div class="mt-1">${musclesLabel}</div>` : ''}
     </div>
     <button onclick="rerollExercise(${index})" class="btn-ghost p-2 rounded-lg flex-shrink-0" title="Remplacer cet exercice">
       <i data-lucide="refresh-cw" class="w-4 h-4"></i>
@@ -919,7 +1017,7 @@ function rerollExercise(index) {
 
   currentWorkout.main[index] = pool[Math.floor(Math.random() * pool.length)];
   const mainDiv = document.getElementById('main-section');
-  const formatLabel = { classic: 'Séries × Répétitions', hiit: 'HIIT / Circuit', amrap: 'AMRAP' }[currentWorkout.format];
+  const formatLabel = { classic: 'Classique', hiit: 'HIIT / Circuit', amrap: 'AMRAP', emom: 'EMOM' }[currentWorkout.format];
   mainDiv.innerHTML = `
     <div class="card p-5">
       <div class="flex items-center justify-between mb-3">
@@ -936,51 +1034,59 @@ function rerollExercise(index) {
 
 // ====== TIMER ======
 function renderTimer(workout) {
-  const timerDiv = document.getElementById('timer-section');
-  const format = workout.format;
-  let html = `<div class="card p-5">
-    <h3 class="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
-      <i data-lucide="clock" class="w-4 h-4 text-accent"></i> Minuteur
-    </h3>
-    <div class="text-center">`;
+  document.getElementById('timer-placeholder').classList.add('hidden');
+  document.getElementById('timer-ui').classList.remove('hidden');
+  renderTimerExerciseList(workout);
+  renderTimerControls(workout);
+}
 
-  if (format === 'classic') {
-    html += `
-      <div class="text-5xl font-bold text-white mb-4 timer-font" id="timer-display">30:00</div>
-      <div class="text-sm text-slate-400 mb-4">Temps total</div>
-      <div class="flex gap-3 justify-center">
-        <button onclick="startClassicTimer(${workout.duration})" class="btn-primary px-6 py-2.5 rounded-lg text-sm flex items-center gap-2" id="timer-start-btn"><i data-lucide="play" class="w-4 h-4"></i> Démarrer</button>
-        <button onclick="pauseTimer()" class="btn-secondary px-4 py-2.5 rounded-lg text-sm hidden" id="timer-pause-btn"><i data-lucide="pause" class="w-4 h-4"></i></button>
-        <button onclick="stopTimer()" class="btn-secondary px-4 py-2.5 rounded-lg text-sm hidden" id="timer-stop-btn"><i data-lucide="square" class="w-4 h-4"></i></button>
-        <button onclick="resetTimerDisplay(${workout.duration})" class="btn-ghost px-3 py-2.5 rounded-lg text-sm hidden" id="timer-reset-btn"><i data-lucide="rotate-ccw" class="w-4 h-4"></i></button>
-      </div>`;
-  } else if (format === 'hiit') {
-    html += `
-      <div class="mb-2"><span class="text-xs font-medium text-slate-400" id="hiit-phase">PRÊT</span></div>
-      <div class="text-5xl font-bold mb-2 timer-font" id="timer-display">00:00</div>
-      <div class="flex items-center justify-center gap-6 text-sm text-slate-400 mb-4">
-        <span>Effort <span class="text-accent font-medium">40s</span></span>
-        <span>Repos <span class="text-red-400 font-medium">20s</span></span>
-      </div>
-      <div class="flex gap-3 justify-center">
-        <button onclick="startHiitTimer()" class="btn-primary px-6 py-2.5 rounded-lg text-sm flex items-center gap-2" id="timer-start-btn"><i data-lucide="play" class="w-4 h-4"></i> Démarrer</button>
-        <button onclick="pauseTimer()" class="btn-secondary px-4 py-2.5 rounded-lg text-sm hidden" id="timer-pause-btn"><i data-lucide="pause" class="w-4 h-4"></i></button>
-        <button onclick="stopTimer()" class="btn-secondary px-4 py-2.5 rounded-lg text-sm hidden" id="timer-stop-btn"><i data-lucide="square" class="w-4 h-4"></i></button>
-      </div>`;
-  } else {
-    html += `
-      <div class="text-5xl font-bold text-white mb-4 timer-font" id="timer-display">${formatTime(workout.duration * 60)}</div>
-      <div class="text-sm text-slate-400 mb-4">AMRAP — Compte à rebours</div>
-      <div class="flex gap-3 justify-center">
-        <button onclick="startAmrapTimer(${workout.duration})" class="btn-primary px-6 py-2.5 rounded-lg text-sm flex items-center gap-2" id="timer-start-btn"><i data-lucide="play" class="w-4 h-4"></i> Démarrer</button>
-        <button onclick="pauseTimer()" class="btn-secondary px-4 py-2.5 rounded-lg text-sm hidden" id="timer-pause-btn"><i data-lucide="pause" class="w-4 h-4"></i></button>
-        <button onclick="stopTimer()" class="btn-secondary px-4 py-2.5 rounded-lg text-sm hidden" id="timer-stop-btn"><i data-lucide="square" class="w-4 h-4"></i></button>
-      </div>`;
+function renderTimerExerciseList(workout) {
+  const container = document.getElementById('timer-exercise-list');
+  let html = '';
+  if (workout.warmup.length) {
+    html += `<div class="text-[10px] text-orange-400 font-semibold uppercase tracking-wider mb-1 mt-2 first:mt-0">Échauffement</div>`;
+    workout.warmup.forEach((ex, i) => {
+      html += `<div class="flex items-center gap-2 py-1.5 px-2 rounded-lg bg-slate-800/20 text-xs text-slate-400"><i data-lucide="activity" class="w-3 h-3 flex-shrink-0"></i><span class="truncate">${escHtml(ex.Nom)}</span></div>`;
+    });
   }
+  html += `<div class="text-[10px] text-accent font-semibold uppercase tracking-wider mb-1 mt-3">Corps de séance</div>`;
+  workout.main.forEach((ex, i) => {
+    html += `<div class="timer-exercise-item flex items-center gap-2 py-2 px-2.5 rounded-lg text-sm transition-all duration-300 bg-slate-800/20" data-ex-index="${i}"><span class="w-6 h-6 rounded-md bg-slate-700/50 flex items-center justify-center text-xs font-bold text-slate-300 flex-shrink-0">${i + 1}</span><span class="truncate text-slate-200">${escHtml(ex.Nom)}</span><span class="text-[10px] text-slate-500 ml-auto flex-shrink-0">${escHtml(ex.Objectif)}</span></div>`;
+  });
+  if (workout.cooldown.length) {
+    html += `<div class="text-[10px] text-blue-400 font-semibold uppercase tracking-wider mb-1 mt-3">Retour au calme</div>`;
+    workout.cooldown.forEach((ex, i) => {
+      html += `<div class="flex items-center gap-2 py-1.5 px-2 rounded-lg bg-slate-800/20 text-xs text-slate-400"><i data-lucide="activity" class="w-3 h-3 flex-shrink-0"></i><span class="truncate">${escHtml(ex.Nom)}</span></div>`;
+    });
+  }
+  container.innerHTML = html;
+  lucide.createIcons({ scope: container });
+}
 
-  html += `</div></div>`;
-  timerDiv.innerHTML = html;
-  lucide.createIcons({ scope: timerDiv });
+function renderTimerControls(workout) {
+  const container = document.getElementById('timer-content');
+  const format = workout.format;
+  const formatLabels = { classic: 'Classique', hiit: 'HIIT', amrap: 'AMRAP', emom: 'EMOM' };
+  let html = `<div class="mb-3"><span class="text-xs bg-accent/10 text-accent px-3 py-1 rounded-full font-medium">${formatLabels[format] || format}</span></div>`;
+  html += `<div id="timer-phase-label" class="text-sm text-slate-400 mb-2"></div>`;
+  html += `<div class="text-6xl font-bold text-white mb-6 timer-font" id="timer-display">${format === 'classic' ? formatTime(0) : formatTime(workout.duration * 60)}</div>`;
+  if (format === 'classic') {
+    html += `<div class="text-sm text-slate-400 mb-4">Temps total : ${workout.duration} min</div>`;
+  } else if (format === 'hiit') {
+    html += `<div class="flex items-center justify-center gap-6 text-sm text-slate-400 mb-4"><span>Effort <span class="text-accent font-medium">45s</span></span><span>Repos <span class="text-red-400 font-medium">15s</span></span></div>`;
+  } else if (format === 'emom') {
+    html += `<div class="text-sm text-slate-400 mb-4">Chaque minute, faites vos répétitions</div>`;
+  } else {
+    html += `<div class="text-sm text-slate-400 mb-4">Compte à rebours — ${workout.duration} min</div>`;
+  }
+  html += `<div class="flex gap-3 justify-center">
+    <button onclick="startTimer()" class="btn-primary px-6 py-2.5 rounded-lg text-sm flex items-center gap-2" id="timer-start-btn"><i data-lucide="play" class="w-4 h-4"></i> Démarrer</button>
+    <button onclick="pauseTimer()" class="btn-secondary px-4 py-2.5 rounded-lg text-sm hidden" id="timer-pause-btn"><i data-lucide="pause" class="w-4 h-4"></i></button>
+    <button onclick="stopTimer()" class="btn-secondary px-4 py-2.5 rounded-lg text-sm hidden" id="timer-stop-btn"><i data-lucide="square" class="w-4 h-4"></i></button>
+    <button onclick="stopTimer(); resetTimerDisplay();" class="btn-ghost px-3 py-2.5 rounded-lg text-sm hidden" id="timer-reset-btn"><i data-lucide="rotate-ccw" class="w-4 h-4"></i></button>
+  </div>`;
+  container.innerHTML = html;
+  lucide.createIcons({ scope: container });
 }
 
 function formatTime(seconds) {
@@ -992,19 +1098,41 @@ function formatTime(seconds) {
 let timerSeconds = 0;
 let timerTotalSeconds = 0;
 let hiitPhase = 'work';
-let hiitWork = 40;
-let hiitRest = 20;
+let hiitWork = 45;
+let hiitRest = 15;
 let hiitRounds = 8;
 let hiitCurrentRound = 0;
+
+function startTimer() {
+  if (!currentWorkout) return;
+  const format = currentWorkout.format;
+  if (format === 'classic') startClassicTimer(currentWorkout.duration);
+  else if (format === 'hiit') startHiitTimer();
+  else if (format === 'emom') startEmomTimer();
+  else startAmrapTimer(currentWorkout.duration);
+}
+
+function updateTimerExerciseHighlight(index) {
+  document.querySelectorAll('.timer-exercise-item').forEach(el => {
+    el.classList.remove('ring-1', 'ring-accent', 'bg-accent/10', 'font-semibold');
+    el.classList.add('bg-slate-800/20');
+  });
+  const active = document.querySelector(`.timer-exercise-item[data-ex-index="${index}"]`);
+  if (active) {
+    active.classList.remove('bg-slate-800/20');
+    active.classList.add('ring-1', 'ring-accent', 'bg-accent/10', 'font-semibold');
+    active.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+}
 
 function startClassicTimer(duration) {
   stopTimer();
   timerTotalSeconds = duration * 60;
   timerSeconds = 0;
-  timerRunning = true;
-  timerPaused = false;
+  timerRunning = true; timerPaused = false;
   toggleTimerButtons(true);
   document.getElementById('timer-display').textContent = formatTime(0);
+  document.getElementById('timer-display').className = 'text-6xl font-bold text-white mb-6 timer-font';
   timerInterval = setInterval(() => {
     if (!timerPaused) {
       timerSeconds++;
@@ -1016,14 +1144,11 @@ function startClassicTimer(duration) {
 
 function startHiitTimer() {
   stopTimer();
-  hiitPhase = 'work';
-  hiitCurrentRound = 0;
-  timerRunning = true;
-  timerPaused = false;
+  hiitPhase = 'work'; hiitCurrentRound = 0;
+  timerRunning = true; timerPaused = false;
   toggleTimerButtons(true);
-  hiitWork = 40;
-  hiitRest = 20;
   hiitRounds = Math.max(4, Math.floor((currentWorkout ? currentWorkout.duration : 30) * 60 / (hiitWork + hiitRest)));
+  updateTimerExerciseHighlight(hiitCurrentRound);
   let counter = hiitWork;
   updateHiitDisplay('TRAVAIL', counter, 'green');
   timerInterval = setInterval(() => {
@@ -1037,6 +1162,7 @@ function startHiitTimer() {
         if (counter <= 0) {
           hiitCurrentRound++;
           if (hiitCurrentRound >= hiitRounds) { stopTimer(); notify('HIIT terminé ! 💪', 'success'); playBeep(); return; }
+          updateTimerExerciseHighlight(hiitCurrentRound % currentWorkout.main.length);
           hiitPhase = 'work'; counter = hiitWork; playBeep(); updateHiitDisplay('TRAVAIL', counter, 'green');
         }
       }
@@ -1045,26 +1171,58 @@ function startHiitTimer() {
 }
 
 function updateHiitDisplay(phase, seconds, color) {
-  document.getElementById('hiit-phase').textContent = `${phase} — Round ${hiitCurrentRound + 1}/${hiitRounds}`;
+  document.getElementById('timer-phase-label').textContent = `${phase} — Round ${hiitCurrentRound + 1}/${hiitRounds}`;
   const disp = document.getElementById('timer-display');
   disp.textContent = formatTime(seconds);
-  disp.className = `text-5xl font-bold mb-2 timer-font ${color === 'red' ? 'timer-rest' : 'timer-work'}`;
+  disp.className = `text-6xl font-bold mb-6 timer-font ${color === 'red' ? 'timer-rest' : 'timer-work'}`;
 }
 
 function startAmrapTimer(duration) {
   stopTimer();
-  timerTotalSeconds = duration * 60;
-  timerSeconds = timerTotalSeconds;
-  timerRunning = true;
-  timerPaused = false;
+  timerTotalSeconds = duration * 60; timerSeconds = timerTotalSeconds;
+  timerRunning = true; timerPaused = false;
   toggleTimerButtons(true);
   document.getElementById('timer-display').textContent = formatTime(timerTotalSeconds);
+  document.getElementById('timer-display').className = 'text-6xl font-bold text-white mb-6 timer-font';
   timerInterval = setInterval(() => {
     if (!timerPaused) {
       timerSeconds--;
       document.getElementById('timer-display').textContent = formatTime(timerSeconds);
       if (timerSeconds <= 10 && timerSeconds > 0) playBeep();
       if (timerSeconds <= 0) { stopTimer(); notify('AMRAP terminé ! 💪', 'success'); playBeep(); }
+    }
+  }, 1000);
+}
+
+function startEmomTimer() {
+  stopTimer();
+  const exercises = currentWorkout.main;
+  if (!exercises || exercises.length === 0) { notify('Aucun exercice', 'error'); return; }
+  timerRunning = true; timerPaused = false;
+  let currentExIndex = 0;
+  let counter = 60;
+  const display = document.getElementById('timer-display');
+  toggleTimerButtons(true);
+  display.textContent = formatTime(counter);
+  display.className = 'text-6xl font-bold text-white mb-6 timer-font';
+  document.getElementById('timer-phase-label').textContent = `${exercises[0].Nom}`;
+  updateTimerExerciseHighlight(0);
+  playBeep();
+  timerInterval = setInterval(() => {
+    if (!timerPaused) {
+      counter--;
+      display.textContent = formatTime(counter);
+      if (counter <= 3 && counter > 0) playBeep();
+      if (counter <= 0) {
+        currentExIndex++;
+        if (currentExIndex >= exercises.length) {
+          stopTimer(); notify('EMOM terminé ! 💪', 'success'); playBeep(); return;
+        }
+        counter = 60;
+        document.getElementById('timer-phase-label').textContent = `${exercises[currentExIndex].Nom}`;
+        updateTimerExerciseHighlight(currentExIndex);
+        playBeep();
+      }
     }
   }, 1000);
 }
@@ -1079,16 +1237,17 @@ function pauseTimer() {
 
 function stopTimer() {
   if (timerInterval) clearInterval(timerInterval);
-  timerInterval = null;
-  timerRunning = false;
-  timerPaused = false;
+  timerInterval = null; timerRunning = false; timerPaused = false;
   toggleTimerButtons(false);
 }
 
-function resetTimerDisplay(duration) {
+function resetTimerDisplay() {
   stopTimer();
-  document.getElementById('timer-display').textContent = formatTime(duration * 60);
-  document.getElementById('timer-display').className = 'text-5xl font-bold text-white mb-4 timer-font';
+  if (currentWorkout) {
+    document.getElementById('timer-display').textContent = formatTime(currentWorkout.duration * 60);
+    document.getElementById('timer-display').className = 'text-6xl font-bold text-white mb-6 timer-font';
+    document.getElementById('timer-phase-label').textContent = '';
+  }
 }
 
 function toggleTimerButtons(running) {
@@ -1101,8 +1260,7 @@ function toggleTimerButtons(running) {
 function playBeep() {
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
+    const osc = ctx.createOscillator(); const gain = ctx.createGain();
     osc.connect(gain); gain.connect(ctx.destination);
     osc.frequency.value = 800; gain.gain.value = 0.3;
     osc.start(); gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
