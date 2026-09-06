@@ -41,8 +41,6 @@ body { background: #0f172a; color: #e2e8f0; }
 .btn-ghost:hover { color: #22c55e; background: rgba(34,197,94,0.1); }
 .exercise-card { background: #1e293b; border-left: 3px solid #22c55e; border-radius: 0.75rem; transition: all 0.2s; }
 .exercise-card:hover { background: #263548; }
-.timer-work { color: #22c55e; }
-.timer-rest { color: #ef4444; }
 .notification { animation: slideIn 0.3s ease-out; }
 @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -55,6 +53,7 @@ input[type="checkbox"] { accent-color: #22c55e; }
 .sort-btn:hover { color: #22c55e; }
 .sort-asc::after { content: ' ▲'; font-size: 0.6rem; }
 .sort-desc::after { content: ' ▼'; font-size: 0.6rem; }
+.format-card.selected { border-color: #22c55e !important; background: rgba(34,197,94,0.06); }
 @media print {
   body { background: white !important; color: #000 !important; }
   .no-print { display: none !important; }
@@ -93,15 +92,10 @@ input[type="checkbox"] { accent-color: #22c55e; }
     <button class="tab-btn active flex items-center gap-2 px-5 py-3 text-sm font-medium text-slate-400 border-b-2 border-transparent transition-all" data-tab="config-session">
       <i data-lucide="sliders" class="w-4 h-4"></i> Configurer ma séance
     </button>
-    <button class="tab-btn flex items-center gap-2 px-5 py-3 text-sm font-medium text-slate-400 border-b-2 border-transparent transition-all" data-tab="config-week">
-      <i data-lucide="calendar" class="w-4 h-4"></i> Planifier ma semaine
-    </button>
     <button class="tab-btn flex items-center gap-2 px-5 py-3 text-sm font-medium text-slate-400 border-b-2 border-transparent transition-all" data-tab="database">
       <i data-lucide="database" class="w-4 h-4"></i> Base d'exercices
     </button>
-    <button class="tab-btn flex items-center gap-2 px-5 py-3 text-sm font-medium text-slate-400 border-b-2 border-transparent transition-all" data-tab="timer">
-      <i data-lucide="clock" class="w-4 h-4"></i> Minuteur
-    </button>
+
   </div>
 
   <div id="tab-config-session" class="tab-content">
@@ -155,13 +149,61 @@ input[type="checkbox"] { accent-color: #22c55e; }
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-slate-300 mb-2">Format</label>
-          <select id="format" class="w-full">
-            <option value="classic">Classique (Séries x Répétitions)</option>
-            <option value="hiit">HIIT / Circuit</option>
-            <option value="amrap">AMRAP</option>
-            <option value="emom">EMOM (Every Minute On the Minute)</option>
-          </select>
+          <label class="block text-sm font-medium text-slate-300 mb-3">Format</label>
+          <div id="format-group" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <label class="format-card cursor-pointer card p-3 border-2 border-slate-700/50 hover:border-accent/40 transition-all duration-200 block" data-format="classic">
+              <input type="radio" name="format" value="classic" checked class="hidden">
+              <div class="flex items-start gap-3">
+                <div class="w-9 h-9 rounded-lg bg-accent/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <i data-lucide="list" class="w-5 h-5 text-accent"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="font-medium text-white text-sm">Classique</div>
+                  <div class="text-xs text-slate-400 mt-0.5">Séries × Répétitions</div>
+                  <div class="text-[11px] text-slate-500 mt-1 leading-relaxed">Idéal pour la force et la technique. Des séries fixes avec un temps de repos complet entre chaque.</div>
+                </div>
+              </div>
+            </label>
+            <label class="format-card cursor-pointer card p-3 border-2 border-slate-700/50 hover:border-accent/40 transition-all duration-200 block" data-format="hiit">
+              <input type="radio" name="format" value="hiit" class="hidden">
+              <div class="flex items-start gap-3">
+                <div class="w-9 h-9 rounded-lg bg-orange-400/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <i data-lucide="flame" class="w-5 h-5 text-orange-400"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="font-medium text-white text-sm">HIIT / Circuit</div>
+                  <div class="text-xs text-slate-400 mt-0.5">45s effort · 15s repos</div>
+                  <div class="text-[11px] text-slate-500 mt-1 leading-relaxed">Idéal pour le cardio et l'endurance. Enchaînement d'exercices chronométrés.</div>
+                </div>
+              </div>
+            </label>
+            <label class="format-card cursor-pointer card p-3 border-2 border-slate-700/50 hover:border-accent/40 transition-all duration-200 block" data-format="amrap">
+              <input type="radio" name="format" value="amrap" class="hidden">
+              <div class="flex items-start gap-3">
+                <div class="w-9 h-9 rounded-lg bg-yellow-400/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <i data-lucide="trophy" class="w-5 h-5 text-yellow-400"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="font-medium text-white text-sm">AMRAP</div>
+                  <div class="text-xs text-slate-400 mt-0.5">Maximum de tours</div>
+                  <div class="text-[11px] text-slate-500 mt-1 leading-relaxed">Défi d'endurance. Effectuez un maximum de tours du circuit dans le temps imparti.</div>
+                </div>
+              </div>
+            </label>
+            <label class="format-card cursor-pointer card p-3 border-2 border-slate-700/50 hover:border-accent/40 transition-all duration-200 block" data-format="emom">
+              <input type="radio" name="format" value="emom" class="hidden">
+              <div class="flex items-start gap-3">
+                <div class="w-9 h-9 rounded-lg bg-blue-400/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <i data-lucide="clock" class="w-5 h-5 text-blue-400"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="font-medium text-white text-sm">EMOM</div>
+                  <div class="text-xs text-slate-400 mt-0.5">Every Minute On the Minute</div>
+                  <div class="text-[11px] text-slate-500 mt-1 leading-relaxed">Commencez un exercice au début de chaque minute, le reste de la minute sert de repos.</div>
+                </div>
+              </div>
+            </label>
+          </div>
         </div>
       </div>
 
@@ -179,19 +221,11 @@ input[type="checkbox"] { accent-color: #22c55e; }
     </div>
 
     <div id="results" class="hidden space-y-6">
+      <div id="session-summary"></div>
       <div id="warmup-section"></div>
       <div id="main-section"></div>
       <div id="cooldown-section"></div>
       <div id="export-section" class="no-print flex gap-3"></div>
-    </div>
-  </div>
-
-  <div id="tab-config-week" class="tab-content hidden">
-    <div class="card p-6">
-      <div class="flex flex-col items-center justify-center py-12 text-slate-500">
-        <i data-lucide="calendar" class="w-12 h-12 mb-4 text-slate-600"></i>
-        <p class="text-sm">Planification hebdomadaire à venir...</p>
-      </div>
     </div>
   </div>
 
@@ -272,25 +306,6 @@ input[type="checkbox"] { accent-color: #22c55e; }
     </div>
   </div>
 
-  <div id="tab-timer" class="tab-content hidden">
-    <div id="timer-placeholder" class="card p-6">
-      <div class="flex flex-col items-center justify-center py-12 text-slate-500">
-        <i data-lucide="clock" class="w-12 h-12 mb-4 text-slate-600"></i>
-        <p class="text-sm">Générez d'abord une séance pour utiliser le minuteur.</p>
-      </div>
-    </div>
-    <div id="timer-ui" class="hidden grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <div class="lg:col-span-1 card p-4">
-        <h3 class="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-          <i data-lucide="list" class="w-4 h-4 text-accent"></i> Exercices
-        </h3>
-        <div id="timer-exercise-list" class="space-y-1 max-h-[70vh] overflow-y-auto pr-1"></div>
-      </div>
-      <div class="lg:col-span-2 card p-6 flex flex-col items-center justify-center">
-        <div id="timer-content" class="w-full text-center"></div>
-      </div>
-    </div>
-  </div>
 </div>
   </div>
 </div>
@@ -418,6 +433,14 @@ Rotations du tronc,Échauffement,Full-body,Débutant,1,Tronc · Obliques
 Pompes inclinées légères,Échauffement,Push,Débutant,1,Pectoraux · Épaules
 Squats à vide,Échauffement,Legs,Débutant,1,Cuisses · Fessiers
 Fentes légères,Échauffement,Legs,Débutant,1,Cuisses · Fessiers
+Montées de genoux,Échauffement,Cardio,Débutant,1,Cuisses · Core
+Mountain climbers lents,Échauffement,Cardio,Débutant,1,Abdominaux · Cuisses
+Jumping jacks légers,Échauffement,Cardio,Débutant,1,Full-body
+Marche sur place genoux hauts,Échauffement,Cardio,Débutant,1,Cuisses · Core
+Planche légère,Échauffement,Abdos,Débutant,1,Core · Abdominaux
+Pont fessier,Échauffement,Legs,Débutant,1,Fessiers · Lombaires
+Pompes murales,Échauffement,Push,Débutant,1,Pectoraux · Épaules
+Circuits de bras arrière,Échauffement,Pull,Débutant,1,Épaules · Dorsaux
 Étirement ischio-jambiers,Retour au calme,Legs,Débutant,1,Ischio-jambiers
 Étirement quadriceps,Retour au calme,Legs,Débutant,1,Quadriceps
 Étirement pectoraux,Retour au calme,Push,Débutant,1,Pectoraux
@@ -439,9 +462,6 @@ let editingWarmupIndex = -1;
 let modalMode = 'exercise';
 let csvMode = 'exercise';
 let currentWorkout = null;
-let timerInterval = null;
-let timerRunning = false;
-let timerPaused = false;
 let sortMain = { field: null, dir: 'asc' };
 let sortWarmup = { field: null, dir: 'asc' };
 const DURATION_VALUES = [10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60];
@@ -462,15 +482,26 @@ function notify(msg, type = 'success') {
 
 // ====== CSV PARSING ======
 function parseCSV(text) {
-  const lines = text.split('\n').map(l => l.trim()).filter(l => l);
-  if (lines.length < 2) return [];
-  const headers = lines[0].split(',').map(h => h.trim());
-  return lines.slice(1).map(line => {
-    const vals = line.split(',').map(v => v.trim());
-    const obj = {};
-    headers.forEach((h, i) => obj[h] = vals[i] || '');
-    return obj;
-  }).filter(e => e.Nom);
+  try {
+    const lines = text.split('\n').map(l => l.trim()).filter(l => l);
+    if (lines.length < 2) return [];
+    const headers = lines[0].split(',').map(h => h.trim());
+    const required = ['Nom', 'Objectif', 'Difficulté', 'Intensité'];
+    const missing = required.filter(r => !headers.includes(r));
+    if (missing.length > 0) {
+      notify(`Colonnes obligatoires manquantes : ${missing.join(', ')}`, 'error');
+      return null;
+    }
+    return lines.slice(1).map(line => {
+      const vals = line.split(',').map(v => v.trim());
+      const obj = {};
+      headers.forEach((h, i) => obj[h] = vals[i] || '');
+      return obj;
+    }).filter(e => e.Nom);
+  } catch (e) {
+    notify('Erreur de lecture du fichier CSV : ' + e.message, 'error');
+    return null;
+  }
 }
 
 function toCSV(data, headers) {
@@ -730,7 +761,7 @@ document.getElementById('csv-apply').addEventListener('click', () => {
   const text = document.getElementById('csv-text').value.trim();
   if (!text) { notify('Collez d\'abord du texte CSV', 'error'); return; }
   const parsed = parseCSV(text);
-  if (parsed.length === 0) { notify('Format CSV invalide', 'error'); return; }
+  if (!parsed || parsed.length === 0) { notify((parsed === null) ? 'Import annulé' : 'Format CSV invalide', 'error'); return; }
   if (csvMode === 'exercise') {
     exercises = parsed;
     saveExercises();
@@ -750,6 +781,15 @@ document.querySelectorAll('.sub-tab-btn').forEach(btn => {
     document.querySelectorAll('.subtab-content').forEach(tc => tc.classList.add('hidden'));
     document.getElementById('subtab-' + btn.dataset.subtab).classList.remove('hidden');
   });
+});
+
+// ====== FORMAT CARD SELECTION ======
+document.getElementById('format-group').addEventListener('click', (e) => {
+  const card = e.target.closest('.format-card');
+  if (!card) return;
+  document.querySelectorAll('.format-card').forEach(c => c.classList.remove('selected'));
+  card.classList.add('selected');
+  card.querySelector('input[type="radio"]').checked = true;
 });
 
 // ====== SORT HANDLERS ======
@@ -837,20 +877,49 @@ function generateReps(difficulty, intensity) {
 }
 
 // ====== WORKOUT GENERATION ======
-function getWarmupForGoal(goals) {
+function getWarmupVolume(duration) {
+  if (duration <= 20) return 3;
+  if (duration <= 40) return 6;
+  return 7;
+}
+
+function getCooldownVolume(duration) {
+  if (duration <= 20) return 2;
+  if (duration <= 40) return 4;
+  return 5;
+}
+
+function getWarmupForGoal(goals, duration) {
   const pool = warmupExercises.filter(e =>
     (e.Type === 'Échauffement' || !e.Type) &&
     (goals.includes(e.Objectif) || e.Objectif === 'Full-body')
   );
-  return shuffleArray(pool.length > 0 ? pool : [{ Nom: 'Rotations articulaires', Objectif: 'Full-body', Difficulté: 'Débutant', Intensité: '1' }]).slice(0, 3 + Math.floor(Math.random() * 2));
+  const vol = getWarmupVolume(duration);
+  return shuffleArray(pool.length > 0 ? pool : [{ Nom: 'Rotations articulaires', Objectif: 'Full-body', Difficulté: 'Débutant', Intensité: '1', Type: 'Échauffement' }]).slice(0, vol);
 }
 
-function getCooldownForGoal(goals) {
+function getCooldownForGoal(goals, duration) {
   const pool = warmupExercises.filter(e =>
     e.Type === 'Retour au calme' &&
     (goals.includes(e.Objectif) || e.Objectif === 'Full-body')
   );
-  return shuffleArray(pool.length > 0 ? pool : [{ Nom: 'Étirements généraux', Objectif: 'Full-body', Difficulté: 'Débutant', Intensité: '1' }]).slice(0, 2 + Math.floor(Math.random() * 2));
+  const vol = getCooldownVolume(duration);
+  return shuffleArray(pool.length > 0 ? pool : [{ Nom: 'Étirements généraux', Objectif: 'Full-body', Difficulté: 'Débutant', Intensité: '1', Type: 'Retour au calme' }]).slice(0, vol);
+}
+
+function isMobilityExercise(ex) {
+  const mobilityKeywords = ['Rotation', 'Mobilité', 'Cercles', 'Balancement', 'Étirement', 'Posture', 'Papillon', 'Chat-vache', 'Circul', 'Mobilité'];
+  return mobilityKeywords.some(k => ex.Nom.includes(k));
+}
+
+function getWarmupInstruction(ex) {
+  const name = escHtml(ex.Nom);
+  if (isMobilityExercise(ex)) return `${name} — 30 à 45 secondes`;
+  return `${name} — 10 à 15 répétitions`;
+}
+
+function getCooldownInstruction(ex) {
+  return `${escHtml(ex.Nom)} — 30 à 45 secondes`;
 }
 
 function getExerciseCount(duration) {
@@ -864,12 +933,58 @@ function shuffleArray(arr) {
   return a;
 }
 
+function renderSessionSummary(workout) {
+  const totalEx = workout.warmup.length + workout.main.length + workout.cooldown.length;
+  const formatLabels = { classic: 'Classique', hiit: 'HIIT / Circuit', amrap: 'AMRAP', emom: 'EMOM' };
+  const formatIcons = { classic: 'list', hiit: 'flame', amrap: 'trophy', emom: 'clock' };
+  const formatColors = { classic: 'bg-accent/10 text-accent', hiit: 'bg-orange-400/10 text-orange-400', amrap: 'bg-yellow-400/10 text-yellow-400', emom: 'bg-blue-400/10 text-blue-400' };
+  const el = document.getElementById('session-summary');
+  el.innerHTML = `
+    <div class="card p-5">
+      <div class="flex items-center justify-between flex-wrap gap-2 mb-4">
+        <span class="text-sm font-medium text-white">Résumé de la séance</span>
+        <span class="text-xs ${formatColors[workout.format]} px-3 py-1 rounded-full font-medium flex items-center gap-1.5">
+          <i data-lucide="${formatIcons[workout.format]}" class="w-3.5 h-3.5"></i> ${formatLabels[workout.format] || workout.format}
+        </span>
+      </div>
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+        <div class="bg-slate-800/30 rounded-lg py-3 px-2">
+          <div class="text-2xl font-bold text-white">${totalEx}</div>
+          <div class="text-[11px] text-slate-400 mt-0.5">Exercices au total</div>
+        </div>
+        <div class="bg-slate-800/30 rounded-lg py-3 px-2">
+          <div class="text-lg font-bold text-white flex items-center justify-center gap-1">
+            <span class="text-orange-400">${workout.warmup.length}</span>
+            <span class="text-slate-600">·</span>
+            <span class="text-accent">${workout.main.length}</span>
+            <span class="text-slate-600">·</span>
+            <span class="text-blue-400">${workout.cooldown.length}</span>
+          </div>
+          <div class="text-[11px] text-slate-400 mt-0.5">Échauf. · Principaux · Retour</div>
+        </div>
+        <div class="bg-slate-800/30 rounded-lg py-3 px-2">
+          <div class="text-2xl font-bold text-white flex items-center justify-center gap-1">
+            <i data-lucide="clock" class="w-4 h-4 text-slate-400"></i>
+          </div>
+          <div class="text-[11px] text-slate-400 mt-0.5">~${workout.duration} minutes</div>
+        </div>
+        <div class="bg-slate-800/30 rounded-lg py-3 px-2">
+          <div class="text-lg font-bold text-accent flex items-center justify-center gap-1">
+            ${Array.from({ length: parseInt(workout.main[0]?.Intensité || 3) }, () => '●').join('')}
+          </div>
+          <div class="text-[11px] text-slate-400 mt-0.5">Intensité moyenne</div>
+        </div>
+      </div>
+    </div>`;
+  lucide.createIcons({ scope: el });
+}
+
 function generateWorkout() {
   const equipment = Array.from(document.querySelectorAll('#equipment-group input:checked')).map(cb => cb.value);
   const duration = parseInt(document.getElementById('duration').value);
   const level = document.getElementById('level').value;
   const goalGoals = getSelectedGoals();
-  const format = document.getElementById('format').value;
+  const format = document.querySelector('input[name="format"]:checked')?.value || 'classic';
   const alternate = document.getElementById('alternate-intensity').checked;
   const levelOrder = { 'Débutant': 0, 'Intermédiaire': 1, 'Avancé': 2 };
   const userLevel = levelOrder[level];
@@ -886,8 +1001,8 @@ function generateWorkout() {
     return null;
   }
 
-  const warmup = getWarmupForGoal(goalGoals);
-  const cooldown = getCooldownForGoal(goalGoals);
+  const warmup = getWarmupForGoal(goalGoals, duration);
+  const cooldown = getCooldownForGoal(goalGoals, duration);
   const count = getExerciseCount(duration);
   let main = shuffleArray(pool).slice(0, Math.min(count, pool.length));
 
@@ -916,13 +1031,14 @@ function renderWorkout(workout) {
   document.getElementById('results').classList.remove('hidden');
   document.getElementById('results').classList.add('fade-in');
 
+  renderSessionSummary(workout);
   const warmupDiv = document.getElementById('warmup-section');
   warmupDiv.innerHTML = `
     <div class="card p-5">
       <h3 class="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
         <i data-lucide="sun" class="w-4 h-4 text-orange-400"></i> Échauffement
       </h3>
-      <div class="space-y-2">${workout.warmup.map(ex => renderExerciseMini(ex)).join('')}</div>
+      <div class="space-y-2">${workout.warmup.map(ex => renderExerciseMini(ex, getWarmupInstruction(ex))).join('')}</div>
     </div>`;
 
   const mainDiv = document.getElementById('main-section');
@@ -944,25 +1060,27 @@ function renderWorkout(workout) {
       <h3 class="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
         <i data-lucide="thermometer" class="w-4 h-4 text-blue-400"></i> Retour au calme
       </h3>
-      <div class="space-y-2">${workout.cooldown.map(ex => renderExerciseMini(ex)).join('')}</div>
+      <div class="space-y-2">${workout.cooldown.map(ex => renderExerciseMini(ex, getCooldownInstruction(ex))).join('')}</div>
     </div>`;
 
   lucide.createIcons({ scope: warmupDiv });
   lucide.createIcons({ scope: mainDiv });
   lucide.createIcons({ scope: coolDiv });
 
-  renderTimer(workout);
   renderExport(workout);
   document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
   notify('Séance générée !');
 }
 
-function renderExerciseMini(ex) {
+function renderExerciseMini(ex, instruction) {
   const muscles = ex.Muscles ? `<span class="text-[10px] text-slate-500 ml-2">${escHtml(ex.Muscles)}</span>` : '';
+  const instrHtml = instruction
+    ? `<span class="text-xs text-accent font-medium ml-auto">${instruction}</span>`
+    : `<span class="text-xs text-slate-500 ml-auto">${ex.Difficulté || ''} · ${ex.Intensité || ''}/5</span>`;
   return `<div class="flex items-center gap-3 py-2 px-3 bg-slate-800/30 rounded-lg">
     <i data-lucide="activity" class="w-4 h-4 text-slate-400 flex-shrink-0"></i>
     <span class="text-sm font-medium text-slate-200">${escHtml(ex.Nom)}</span>${muscles}
-    <span class="text-xs text-slate-500 ml-auto">${ex.Difficulté || ''} · ${ex.Intensité || ''}/5</span>
+    ${instrHtml}
   </div>`;
 }
 
@@ -1032,242 +1150,6 @@ function rerollExercise(index) {
   notify('Exercice remplacé');
 }
 
-// ====== TIMER ======
-function renderTimer(workout) {
-  document.getElementById('timer-placeholder').classList.add('hidden');
-  document.getElementById('timer-ui').classList.remove('hidden');
-  renderTimerExerciseList(workout);
-  renderTimerControls(workout);
-}
-
-function renderTimerExerciseList(workout) {
-  const container = document.getElementById('timer-exercise-list');
-  let html = '';
-  if (workout.warmup.length) {
-    html += `<div class="text-[10px] text-orange-400 font-semibold uppercase tracking-wider mb-1 mt-2 first:mt-0">Échauffement</div>`;
-    workout.warmup.forEach((ex, i) => {
-      html += `<div class="flex items-center gap-2 py-1.5 px-2 rounded-lg bg-slate-800/20 text-xs text-slate-400"><i data-lucide="activity" class="w-3 h-3 flex-shrink-0"></i><span class="truncate">${escHtml(ex.Nom)}</span></div>`;
-    });
-  }
-  html += `<div class="text-[10px] text-accent font-semibold uppercase tracking-wider mb-1 mt-3">Corps de séance</div>`;
-  workout.main.forEach((ex, i) => {
-    html += `<div class="timer-exercise-item flex items-center gap-2 py-2 px-2.5 rounded-lg text-sm transition-all duration-300 bg-slate-800/20" data-ex-index="${i}"><span class="w-6 h-6 rounded-md bg-slate-700/50 flex items-center justify-center text-xs font-bold text-slate-300 flex-shrink-0">${i + 1}</span><span class="truncate text-slate-200">${escHtml(ex.Nom)}</span><span class="text-[10px] text-slate-500 ml-auto flex-shrink-0">${escHtml(ex.Objectif)}</span></div>`;
-  });
-  if (workout.cooldown.length) {
-    html += `<div class="text-[10px] text-blue-400 font-semibold uppercase tracking-wider mb-1 mt-3">Retour au calme</div>`;
-    workout.cooldown.forEach((ex, i) => {
-      html += `<div class="flex items-center gap-2 py-1.5 px-2 rounded-lg bg-slate-800/20 text-xs text-slate-400"><i data-lucide="activity" class="w-3 h-3 flex-shrink-0"></i><span class="truncate">${escHtml(ex.Nom)}</span></div>`;
-    });
-  }
-  container.innerHTML = html;
-  lucide.createIcons({ scope: container });
-}
-
-function renderTimerControls(workout) {
-  const container = document.getElementById('timer-content');
-  const format = workout.format;
-  const formatLabels = { classic: 'Classique', hiit: 'HIIT', amrap: 'AMRAP', emom: 'EMOM' };
-  let html = `<div class="mb-3"><span class="text-xs bg-accent/10 text-accent px-3 py-1 rounded-full font-medium">${formatLabels[format] || format}</span></div>`;
-  html += `<div id="timer-phase-label" class="text-sm text-slate-400 mb-2"></div>`;
-  html += `<div class="text-6xl font-bold text-white mb-6 timer-font" id="timer-display">${format === 'classic' ? formatTime(0) : formatTime(workout.duration * 60)}</div>`;
-  if (format === 'classic') {
-    html += `<div class="text-sm text-slate-400 mb-4">Temps total : ${workout.duration} min</div>`;
-  } else if (format === 'hiit') {
-    html += `<div class="flex items-center justify-center gap-6 text-sm text-slate-400 mb-4"><span>Effort <span class="text-accent font-medium">45s</span></span><span>Repos <span class="text-red-400 font-medium">15s</span></span></div>`;
-  } else if (format === 'emom') {
-    html += `<div class="text-sm text-slate-400 mb-4">Chaque minute, faites vos répétitions</div>`;
-  } else {
-    html += `<div class="text-sm text-slate-400 mb-4">Compte à rebours — ${workout.duration} min</div>`;
-  }
-  html += `<div class="flex gap-3 justify-center">
-    <button onclick="startTimer()" class="btn-primary px-6 py-2.5 rounded-lg text-sm flex items-center gap-2" id="timer-start-btn"><i data-lucide="play" class="w-4 h-4"></i> Démarrer</button>
-    <button onclick="pauseTimer()" class="btn-secondary px-4 py-2.5 rounded-lg text-sm hidden" id="timer-pause-btn"><i data-lucide="pause" class="w-4 h-4"></i></button>
-    <button onclick="stopTimer()" class="btn-secondary px-4 py-2.5 rounded-lg text-sm hidden" id="timer-stop-btn"><i data-lucide="square" class="w-4 h-4"></i></button>
-    <button onclick="stopTimer(); resetTimerDisplay();" class="btn-ghost px-3 py-2.5 rounded-lg text-sm hidden" id="timer-reset-btn"><i data-lucide="rotate-ccw" class="w-4 h-4"></i></button>
-  </div>`;
-  container.innerHTML = html;
-  lucide.createIcons({ scope: container });
-}
-
-function formatTime(seconds) {
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-}
-
-let timerSeconds = 0;
-let timerTotalSeconds = 0;
-let hiitPhase = 'work';
-let hiitWork = 45;
-let hiitRest = 15;
-let hiitRounds = 8;
-let hiitCurrentRound = 0;
-
-function startTimer() {
-  if (!currentWorkout) return;
-  const format = currentWorkout.format;
-  if (format === 'classic') startClassicTimer(currentWorkout.duration);
-  else if (format === 'hiit') startHiitTimer();
-  else if (format === 'emom') startEmomTimer();
-  else startAmrapTimer(currentWorkout.duration);
-}
-
-function updateTimerExerciseHighlight(index) {
-  document.querySelectorAll('.timer-exercise-item').forEach(el => {
-    el.classList.remove('ring-1', 'ring-accent', 'bg-accent/10', 'font-semibold');
-    el.classList.add('bg-slate-800/20');
-  });
-  const active = document.querySelector(`.timer-exercise-item[data-ex-index="${index}"]`);
-  if (active) {
-    active.classList.remove('bg-slate-800/20');
-    active.classList.add('ring-1', 'ring-accent', 'bg-accent/10', 'font-semibold');
-    active.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  }
-}
-
-function startClassicTimer(duration) {
-  stopTimer();
-  timerTotalSeconds = duration * 60;
-  timerSeconds = 0;
-  timerRunning = true; timerPaused = false;
-  toggleTimerButtons(true);
-  document.getElementById('timer-display').textContent = formatTime(0);
-  document.getElementById('timer-display').className = 'text-6xl font-bold text-white mb-6 timer-font';
-  timerInterval = setInterval(() => {
-    if (!timerPaused) {
-      timerSeconds++;
-      document.getElementById('timer-display').textContent = formatTime(timerSeconds);
-      if (timerSeconds >= timerTotalSeconds) { stopTimer(); notify('Séance terminée ! 💪', 'success'); playBeep(); }
-    }
-  }, 1000);
-}
-
-function startHiitTimer() {
-  stopTimer();
-  hiitPhase = 'work'; hiitCurrentRound = 0;
-  timerRunning = true; timerPaused = false;
-  toggleTimerButtons(true);
-  hiitRounds = Math.max(4, Math.floor((currentWorkout ? currentWorkout.duration : 30) * 60 / (hiitWork + hiitRest)));
-  updateTimerExerciseHighlight(hiitCurrentRound);
-  let counter = hiitWork;
-  updateHiitDisplay('TRAVAIL', counter, 'green');
-  timerInterval = setInterval(() => {
-    if (!timerPaused) {
-      counter--;
-      if (hiitPhase === 'work') {
-        updateHiitDisplay('TRAVAIL', counter, 'green');
-        if (counter <= 0) { hiitPhase = 'rest'; counter = hiitRest; playBeep(); updateHiitDisplay('REPOS', counter, 'red'); }
-      } else {
-        updateHiitDisplay('REPOS', counter, 'red');
-        if (counter <= 0) {
-          hiitCurrentRound++;
-          if (hiitCurrentRound >= hiitRounds) { stopTimer(); notify('HIIT terminé ! 💪', 'success'); playBeep(); return; }
-          updateTimerExerciseHighlight(hiitCurrentRound % currentWorkout.main.length);
-          hiitPhase = 'work'; counter = hiitWork; playBeep(); updateHiitDisplay('TRAVAIL', counter, 'green');
-        }
-      }
-    }
-  }, 1000);
-}
-
-function updateHiitDisplay(phase, seconds, color) {
-  document.getElementById('timer-phase-label').textContent = `${phase} — Round ${hiitCurrentRound + 1}/${hiitRounds}`;
-  const disp = document.getElementById('timer-display');
-  disp.textContent = formatTime(seconds);
-  disp.className = `text-6xl font-bold mb-6 timer-font ${color === 'red' ? 'timer-rest' : 'timer-work'}`;
-}
-
-function startAmrapTimer(duration) {
-  stopTimer();
-  timerTotalSeconds = duration * 60; timerSeconds = timerTotalSeconds;
-  timerRunning = true; timerPaused = false;
-  toggleTimerButtons(true);
-  document.getElementById('timer-display').textContent = formatTime(timerTotalSeconds);
-  document.getElementById('timer-display').className = 'text-6xl font-bold text-white mb-6 timer-font';
-  timerInterval = setInterval(() => {
-    if (!timerPaused) {
-      timerSeconds--;
-      document.getElementById('timer-display').textContent = formatTime(timerSeconds);
-      if (timerSeconds <= 10 && timerSeconds > 0) playBeep();
-      if (timerSeconds <= 0) { stopTimer(); notify('AMRAP terminé ! 💪', 'success'); playBeep(); }
-    }
-  }, 1000);
-}
-
-function startEmomTimer() {
-  stopTimer();
-  const exercises = currentWorkout.main;
-  if (!exercises || exercises.length === 0) { notify('Aucun exercice', 'error'); return; }
-  timerRunning = true; timerPaused = false;
-  let currentExIndex = 0;
-  let counter = 60;
-  const display = document.getElementById('timer-display');
-  toggleTimerButtons(true);
-  display.textContent = formatTime(counter);
-  display.className = 'text-6xl font-bold text-white mb-6 timer-font';
-  document.getElementById('timer-phase-label').textContent = `${exercises[0].Nom}`;
-  updateTimerExerciseHighlight(0);
-  playBeep();
-  timerInterval = setInterval(() => {
-    if (!timerPaused) {
-      counter--;
-      display.textContent = formatTime(counter);
-      if (counter <= 3 && counter > 0) playBeep();
-      if (counter <= 0) {
-        currentExIndex++;
-        if (currentExIndex >= exercises.length) {
-          stopTimer(); notify('EMOM terminé ! 💪', 'success'); playBeep(); return;
-        }
-        counter = 60;
-        document.getElementById('timer-phase-label').textContent = `${exercises[currentExIndex].Nom}`;
-        updateTimerExerciseHighlight(currentExIndex);
-        playBeep();
-      }
-    }
-  }, 1000);
-}
-
-function pauseTimer() {
-  timerPaused = !timerPaused;
-  document.getElementById('timer-pause-btn').innerHTML = timerPaused
-    ? '<i data-lucide="play" class="w-4 h-4"></i>'
-    : '<i data-lucide="pause" class="w-4 h-4"></i>';
-  lucide.createIcons({ scope: document.getElementById('timer-pause-btn') });
-}
-
-function stopTimer() {
-  if (timerInterval) clearInterval(timerInterval);
-  timerInterval = null; timerRunning = false; timerPaused = false;
-  toggleTimerButtons(false);
-}
-
-function resetTimerDisplay() {
-  stopTimer();
-  if (currentWorkout) {
-    document.getElementById('timer-display').textContent = formatTime(currentWorkout.duration * 60);
-    document.getElementById('timer-display').className = 'text-6xl font-bold text-white mb-6 timer-font';
-    document.getElementById('timer-phase-label').textContent = '';
-  }
-}
-
-function toggleTimerButtons(running) {
-  ['start', 'pause', 'stop', 'reset'].forEach(id => {
-    const el = document.getElementById(`timer-${id}-btn`);
-    if (el) el.classList.toggle('hidden', id === 'start' ? running : !running);
-  });
-}
-
-function playBeep() {
-  try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const osc = ctx.createOscillator(); const gain = ctx.createGain();
-    osc.connect(gain); gain.connect(ctx.destination);
-    osc.frequency.value = 800; gain.gain.value = 0.3;
-    osc.start(); gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
-    osc.stop(ctx.currentTime + 0.3);
-  } catch (e) { /* silent */ }
-}
-
 // ====== EXPORT ======
 function renderExport(workout) {
   const exportDiv = document.getElementById('export-section');
@@ -1294,7 +1176,7 @@ function exportCSV() {
   a.href = URL.createObjectURL(blob);
   a.download = `seance-calisthenics-${new Date().toISOString().slice(0,10)}.csv`;
   a.click();
-  URL.revokeObjectURL(url);
+  URL.revokeObjectURL(a.href);
   notify('Fichier CSV téléchargé');
 }
 
@@ -1310,7 +1192,6 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 
 // ====== GENERATE BUTTON ======
 document.getElementById('generate-btn').addEventListener('click', () => {
-  stopTimer();
   const workout = generateWorkout();
   if (workout) renderWorkout(workout);
 });
@@ -1319,6 +1200,7 @@ document.getElementById('generate-btn').addEventListener('click', () => {
 loadExercises();
 loadWarmupExercises();
 lucide.createIcons();
+document.querySelector('.format-card[data-format="classic"]')?.classList.add('selected');
 </script>
 </body>
 </html>
