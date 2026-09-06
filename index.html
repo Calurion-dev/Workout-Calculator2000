@@ -227,6 +227,17 @@ input[type="checkbox"] { accent-color: #22c55e; }
       <div id="cooldown-section"></div>
       <div id="export-section" class="no-print flex gap-3"></div>
     </div>
+
+    <div id="favorites-section" class="card p-5 mt-6">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-sm font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+          <i data-lucide="star" class="w-4 h-4 text-yellow-400"></i> Mes séances types
+        </h3>
+        <span id="favorites-count" class="text-xs bg-slate-800 text-slate-400 px-2.5 py-1 rounded-full">0</span>
+      </div>
+      <div id="favorites-list" class="space-y-2"></div>
+      <p id="favorites-empty" class="text-sm text-slate-500 py-4 text-center">Aucune séance sauvegardée. Génère une séance puis clique sur ★ Sauvegarder.</p>
+    </div>
   </div>
 
   <div id="tab-database" class="tab-content hidden">
@@ -349,6 +360,18 @@ input[type="checkbox"] { accent-color: #22c55e; }
     <div class="flex gap-3 mt-5">
       <button id="modal-cancel" class="btn-secondary flex-1 py-2.5 rounded-lg text-sm">Annuler</button>
       <button id="modal-save" class="btn-primary flex-1 py-2.5 rounded-lg text-sm">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<div id="favorite-modal" class="fixed inset-0 z-50 hidden modal-overlay flex items-center justify-center p-4">
+  <div class="card p-6 w-full max-w-sm">
+    <h3 class="text-base font-semibold text-white mb-1">Sauvegarder la séance</h3>
+    <p class="text-xs text-slate-400 mb-3">Donne un nom à ta séance type.</p>
+    <input id="favorite-name" class="w-full" placeholder="Ex: Push intense 45min">
+    <div class="flex gap-3 mt-4">
+      <button id="favorite-cancel" class="btn-secondary flex-1 py-2.5 rounded-lg text-sm">Annuler</button>
+      <button id="favorite-confirm" class="btn-primary flex-1 py-2.5 rounded-lg text-sm">Sauvegarder</button>
     </div>
   </div>
 </div>
@@ -1150,15 +1173,87 @@ function rerollExercise(index) {
   notify('Exercice remplacé');
 }
 
+// ====== FAVORITES ======
+let favorites = [];
+
+function loadFavorites() {
+  try { favorites = JSON.parse(localStorage.getItem('calisthenics_favorites') || '[]'); } catch(e) { favorites = []; }
+  renderFavorites();
+}
+function saveFavorites() {
+  localStorage.setItem('calisthenics_favorites', JSON.stringify(favorites));
+  renderFavorites();
+}
+function renderFavorites() {
+  const list = document.getElementById('favorites-list');
+  const empty = document.getElementById('favorites-empty');
+  const count = document.getElementById('favorites-count');
+  if (!list) return;
+  count.textContent = favorites.length;
+  if (favorites.length === 0) {
+    list.innerHTML = '';
+    empty.classList.remove('hidden');
+    return;
+  }
+  empty.classList.add('hidden');
+  list.innerHTML = favorites.map(f => `
+    <div class="flex items-center gap-3 p-3 rounded-xl bg-slate-800/40 border border-slate-700/50 hover:border-slate-600 transition">
+      <div class="w-8 h-8 rounded-lg bg-yellow-400/10 flex items-center justify-center flex-shrink-0"><i data-lucide="star" class="w-4 h-4 text-yellow-400"></i></div>
+      <div class="flex-1 min-w-0">
+        <div class="text-sm font-medium text-white truncate">${escHtml(f.name)}</div>
+        <div class="text-xs text-slate-400">${f.workout.main.length} ex · ${f.workout.duration} min · ${f.workout.format} · ${new Date(f.createdAt).toLocaleDateString('fr-FR')}</div>
+      </div>
+      <button onclick="loadFavorite('${f.id}')" class="btn-primary text-xs px-3 py-1.5 rounded-lg flex items-center gap-1" title="Charger"><i data-lucide="play" class="w-3 h-3"></i> Charger</button>
+      <button onclick="deleteFavorite('${f.id}')" class="btn-ghost p-1.5 rounded-lg text-red-400" title="Supprimer"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+    </div>`).join('');
+  lucide.createIcons({ scope: list });
+}
+function openFavoriteModal() {
+  if (!currentWorkout) { notify('Génère d\'abord une séance', 'error'); return; }
+  document.getElementById('favorite-name').value = `${currentWorkout.goal.join('/')} · ${currentWorkout.duration}min · ${currentWorkout.format}`;
+  document.getElementById('favorite-modal').classList.remove('hidden');
+  document.getElementById('favorite-name').focus();
+  document.getElementById('favorite-name').select();
+}
+function closeFavoriteModal() { document.getElementById('favorite-modal').classList.add('hidden'); }
+function confirmFavorite() {
+  const name = document.getElementById('favorite-name').value.trim();
+  if (!name) { notify('Donne un nom à ta séance', 'error'); return; }
+  const fav = { id: Date.now().toString(36), name, workout: JSON.parse(JSON.stringify(currentWorkout)), createdAt: new Date().toISOString() };
+  favorites.unshift(fav);
+  saveFavorites();
+  closeFavoriteModal();
+  notify('Séance sauvegardée ★');
+}
+function loadFavorite(id) {
+  const fav = favorites.find(f => f.id === id);
+  if (!fav) return;
+  renderWorkout(fav.workout);
+  // switch to session tab if needed
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector('[data-tab="config-session"]')?.classList.add('active');
+  document.querySelectorAll('.tab-content').forEach(tc => tc.classList.add('hidden'));
+  document.getElementById('tab-config-session')?.classList.remove('hidden');
+  notify(`Séance "${fav.name}" chargée`);
+}
+function deleteFavorite(id) {
+  favorites = favorites.filter(f => f.id !== id);
+  saveFavorites();
+  notify('Séance supprimée', 'info');
+}
+
 // ====== EXPORT ======
 function renderExport(workout) {
   const exportDiv = document.getElementById('export-section');
   exportDiv.innerHTML = `
+    <button onclick="openFavoriteModal()" class="btn-primary flex-1 py-3 rounded-xl text-sm flex items-center justify-center gap-2">
+      <i data-lucide="star" class="w-4 h-4"></i> Sauvegarder
+    </button>
     <button onclick="exportPDF()" class="btn-secondary flex-1 py-3 rounded-xl text-sm flex items-center justify-center gap-2">
-      <i data-lucide="file-text" class="w-4 h-4"></i> Exporter en PDF
+      <i data-lucide="file-text" class="w-4 h-4"></i> PDF
     </button>
     <button onclick="exportCSV()" class="btn-secondary flex-1 py-3 rounded-xl text-sm flex items-center justify-center gap-2">
-      <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Exporter en CSV
+      <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> CSV
     </button>`;
   lucide.createIcons({ scope: exportDiv });
 }
@@ -1196,9 +1291,16 @@ document.getElementById('generate-btn').addEventListener('click', () => {
   if (workout) renderWorkout(workout);
 });
 
+// ====== FAVORITE MODAL HANDLERS ======
+document.getElementById('favorite-cancel').addEventListener('click', closeFavoriteModal);
+document.getElementById('favorite-confirm').addEventListener('click', confirmFavorite);
+document.getElementById('favorite-modal').addEventListener('click', (e) => { if (e.target.id === 'favorite-modal') closeFavoriteModal(); });
+document.getElementById('favorite-name').addEventListener('keydown', (e) => { if (e.key === 'Enter') confirmFavorite(); if (e.key === 'Escape') closeFavoriteModal(); });
+
 // ====== INIT ======
 loadExercises();
 loadWarmupExercises();
+loadFavorites();
 lucide.createIcons();
 document.querySelector('.format-card[data-format="classic"]')?.classList.add('selected');
 </script>
