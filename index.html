@@ -890,70 +890,235 @@ document.getElementById('level').addEventListener('input', function() {
   document.getElementById('level-value').textContent = LEVEL_NAMES[parseInt(this.value)];
 });
 
-// ====== REPS GENERATION ======
-function generateReps(difficulty, intensity) {
-  const baseReps = { Débutant: [6, 10], Intermédiaire: [8, 15], Avancé: [10, 20] };
-  const [rmin, rmax] = baseReps[difficulty] || [8, 12];
-  const reps = rmin + Math.round((rmax - rmin) * (parseInt(intensity) / 5));
-  const sets = parseInt(intensity) >= 4 ? 4 : parseInt(intensity) >= 2 ? 3 : 2;
-  return `${sets} × ${reps}`;
+// ============================================================
+// 🧠 SCIENCE — Helpers biomécaniques Workout-Calculator2000
+// ============================================================
+
+// Détecte les exercices de Skill / isométrie / hold — doivent passer en premier (SNC frais, pas d'échec)
+function isSkillOrHold(ex) {
+  if (!ex || !ex.Nom) return false;
+  const n = ex.Nom.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  const kws = ['gainage','planche','l-sit','lsit','levier','front lever','back lever','equerre','drapeau','flag','muscle-up','muscle up','tuck','frog','handstand','equilibre','hollow','dragon flag','planche avant','l sit'];
+  return kws.some(k => n.includes(k));
 }
 
-// ====== WORKOUT GENERATION ======
+// Cues techniques dynamiques affichés sous chaque exercice
+function getTechnicalCue(ex) {
+  if (isSkillOrHold(ex)) return 'Qualité > Quantité. Arrêtez avant la failure technique. Corps gainé, respiration contrôlée.';
+  const n = (ex.Nom||'').toLowerCase();
+  if (n.includes('pompe') || n.includes('dips') || n.includes('dip ')) return 'Gardez les coudes rentrés, creux abdominal (Hollow Body), épaules basses.';
+  if (n.includes('traction') || n.includes('rowing') || n.includes('muscle-up') || n.includes('muscle up')) return 'Initiez par une dépression scapulaire, poitrine vers la barre, pas de kip.';
+  if (n.includes('squat') || n.includes('fente') || n.includes('pistol')) return 'Poids sur talons, genoux dans l\'axe, buste fier. Amplitude complète.';
+  if (n.includes('abdos') || n.includes('crunch') || n.includes('relevé') || n.includes('v-up') || n.includes('russian')) return 'Bassin rétroversé, lombaires plaquées, soufflez sur l\'effort.';
+  if (n.includes('burpee') || n.includes('jumping') || n.includes('jump') || n.includes('box jump')) return 'Réception souple, amorti genoux, gainage actif.';
+  return 'Contrôle excentrique 2s, concentrique explosif, ne jamais sacrifier la forme.';
+}
+
+// ====== ÉCHAUFFEMENT / RETOUR AU CALME — volumes & préhab ======
 function getWarmupVolume(duration) {
   if (duration <= 20) return 3;
   if (duration <= 40) return 6;
   return 7;
 }
-
 function getCooldownVolume(duration) {
   if (duration <= 20) return 2;
   if (duration <= 40) return 4;
   return 5;
 }
+function getExerciseCount(duration) {
+  const map = { 10: 2, 15: 3, 20: 3, 25: 4, 30: 4, 35: 5, 40: 5, 45: 6, 50: 6, 55: 7, 60: 8 };
+  return map[duration] || 4;
+}
+function shuffleArray(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+  return a;
+}
+function pickRandom(arr, n) { return shuffleArray(arr).slice(0, n); }
 
+// Préhab : garantit au moins 1 mobilité poignet + 1 épaule si Push/Pull dans la séance
 function getWarmupForGoal(goals, duration) {
-  const pool = warmupExercises.filter(e =>
-    (e.Type === 'Échauffement' || !e.Type) &&
-    (goals.includes(e.Objectif) || e.Objectif === 'Full-body')
-  );
   const vol = getWarmupVolume(duration);
-  return shuffleArray(pool.length > 0 ? pool : [{ Nom: 'Rotations articulaires', Objectif: 'Full-body', Difficulté: 'Débutant', Intensité: '1', Type: 'Échauffement' }]).slice(0, vol);
+  let pool = warmupExercises.filter(e => (e.Type === 'Échauffement' || !e.Type) && (goals.includes(e.Objectif) || e.Objectif === 'Full-body'));
+  if (pool.length === 0) pool = [{ Nom: 'Rotations articulaires', Objectif: 'Full-body', Difficulté: 'Débutant', Intensité: '1', Type: 'Échauffement', Muscles: 'Général' }];
+  const needsPrehab = goals.includes('Push') || goals.includes('Pull') || goals.includes('Full-body');
+  let selected = [];
+  if (needsPrehab) {
+    const wrist = warmupExercises.find(e => /poignet/i.test(e.Nom));
+    const shoulder = warmupExercises.find(e => /épaule|epaule|scapulaire|cercle.*bras|rotation.*épaule/i.test(e.Nom));
+    if (wrist && !selected.find(s=>s.Nom===wrist.Nom)) selected.push(wrist);
+    if (shoulder && !selected.find(s=>s.Nom===shoulder.Nom)) selected.push(shoulder);
+    // compléter sans doublon
+    const rest = pool.filter(e => !selected.find(s=>s.Nom===e.Nom));
+    selected = selected.concat(pickRandom(rest, Math.max(0, vol - selected.length)));
+    // si on a dépassé (vol petit), on garde au moins préhab + 1 autre
+    selected = selected.slice(0, vol);
+    // edge: si vol < selected.length, on garde quand même les 2 préhab en rognant le reste (vol minimum 3 couvre ce cas)
+  } else {
+    selected = pickRandom(pool, vol);
+  }
+  return shuffleArray(selected);
 }
 
+// Décompression : garantit suspension passive / dead hang si Pull présent
 function getCooldownForGoal(goals, duration) {
-  const pool = warmupExercises.filter(e =>
-    e.Type === 'Retour au calme' &&
-    (goals.includes(e.Objectif) || e.Objectif === 'Full-body')
-  );
   const vol = getCooldownVolume(duration);
-  return shuffleArray(pool.length > 0 ? pool : [{ Nom: 'Étirements généraux', Objectif: 'Full-body', Difficulté: 'Débutant', Intensité: '1', Type: 'Retour au calme' }]).slice(0, vol);
+  let pool = warmupExercises.filter(e => e.Type === 'Retour au calme' && (goals.includes(e.Objectif) || e.Objectif === 'Full-body'));
+  if (pool.length === 0) pool = [{ Nom: 'Étirements généraux', Objectif: 'Full-body', Difficulté: 'Débutant', Intensité: '1', Type: 'Retour au calme', Muscles: 'Général' }];
+  const needsDecomp = goals.includes('Pull');
+  // cherche une suspension / dead hang / étirement dorsaux dans toute la base warmup
+  const decomp = warmupExercises.find(e => e.Type==='Retour au calme' && /suspension|dead hang|grand dorsal|dorsaux/i.test(e.Nom)) || warmupExercises.find(e=> e.Type==='Retour au calme');
+  let selected = pickRandom(pool, vol);
+  if (needsDecomp && decomp && !selected.find(s=>s.Nom===decomp.Nom)) {
+    selected[0] = decomp; // remplace le premier pour garantir la décompression
+  }
+  return selected;
 }
 
 function isMobilityExercise(ex) {
-  const mobilityKeywords = ['Rotation', 'Mobilité', 'Cercles', 'Balancement', 'Étirement', 'Posture', 'Papillon', 'Chat-vache', 'Circul', 'Mobilité'];
+  const mobilityKeywords = ['Rotation', 'Mobilité', 'Cercles', 'Balancement', 'Étirement', 'Posture', 'Papillon', 'Chat-vache', 'Circul', 'Suspension', 'Dead hang'];
   return mobilityKeywords.some(k => ex.Nom.includes(k));
 }
-
 function getWarmupInstruction(ex) {
   const name = escHtml(ex.Nom);
   if (isMobilityExercise(ex)) return `${name} — 30 à 45 secondes`;
   return `${name} — 10 à 15 répétitions`;
 }
+function getCooldownInstruction(ex) { return `${escHtml(ex.Nom)} — 30 à 45 secondes`; }
 
-function getCooldownInstruction(ex) {
-  return `${escHtml(ex.Nom)} — 30 à 45 secondes`;
+// ====== FORMAT HELPERS — schémas sets/reps/repos ======
+function getClassicScheme(level) {
+  // Retourne {sets, reps, rest} selon niveau — specs strictes du CDC
+  if (level === 0) return { sets: 3, reps: '8-12', rest: '90s' };
+  if (level === 1) return { sets: 4, reps: '6-10', rest: '120s' };
+  return { sets: 5, reps: '3-8', rest: '180s' };
+}
+function getEmomReps(ex, levelIdx) {
+  // Skill = hold léger 15s, sinon 5-10 reps laissant 30-40s de repos
+  if (isSkillOrHold(ex)) return '15s hold';
+  const base = levelIdx === 0 ? 5 : levelIdx === 1 ? 7 : 10;
+  // ajuste légèrement selon intensité
+  const adj = parseInt(ex.Intensité) >= 4 ? -1 : parseInt(ex.Intensité) <= 2 ? 1 : 0;
+  return `${Math.max(3, base + adj)} reps`;
+}
+function buildClassicBlocks(ordered, levelIdx) {
+  // Regroupe en supersets antagonistes : Push+Pull, Legs seul ou Legs+Abdos, etc.
+  const scheme = getClassicScheme(levelIdx);
+  const blocks = [];
+  let i = 0;
+  let blockIdx = 1;
+  while (i < ordered.length) {
+    const a = ordered[i];
+    const b = ordered[i+1];
+    // essaie de former un superset Push/Pull
+    if (b && ((a.Objectif==='Push' && b.Objectif==='Pull') || (a.Objectif==='Pull' && b.Objectif==='Push'))) {
+      blocks.push({
+        title: `Bloc ${blockIdx} — Superset Antagoniste`,
+        subtitle: `${a.Objectif} + ${b.Objectif} · Force`,
+        exercises: [
+          { ex: a, sets: scheme.sets, reps: scheme.reps, rest: scheme.rest, cue: getTechnicalCue(a), isSkill: isSkillOrHold(a) },
+          { ex: b, sets: scheme.sets, reps: scheme.reps, rest: scheme.rest, cue: getTechnicalCue(b), isSkill: isSkillOrHold(b) }
+        ],
+        restBetween: scheme.rest
+      });
+      i += 2; blockIdx++;
+    } else {
+      blocks.push({
+        title: `Bloc ${blockIdx} — Force`,
+        subtitle: a.Objectif,
+        exercises: [{ ex: a, sets: scheme.sets, reps: scheme.reps, rest: scheme.rest, cue: getTechnicalCue(a), isSkill: isSkillOrHold(a) }],
+        restBetween: scheme.rest
+      });
+      i += 1; blockIdx++;
+    }
+  }
+  return blocks;
+}
+function buildEmomBlocks(ordered, duration, levelIdx) {
+  // EMOM 10-20 min ; alterne les minutes ; reps 20-30s d'effort
+  const emomDuration = duration <= 20 ? 10 : duration <= 40 ? 15 : 20;
+  const blocks = [];
+  // On cycle les exercices sur la durée EMOM
+  const cycled = [];
+  for (let m = 0; m < emomDuration; m++) cycled.push(ordered[m % ordered.length]);
+  // Groupe par minute alternée pour affichage : on affiche la liste EMOM minute par minute
+  const exercises = cycled.map((ex, idx) => ({
+    ex, sets: 1, reps: getEmomReps(ex, levelIdx), rest: '30-40s rest restant', cue: getTechnicalCue(ex), isSkill: isSkillOrHold(ex), minute: idx+1
+  }));
+  blocks.push({ title: `EMOM ${emomDuration} min`, subtitle: 'Chaque minute : effectuez puis reposez-vous', exercises, restBetween: '—', emomDuration });
+  return blocks;
+}
+function buildAmrapBlocks(ordered, duration, levelIdx) {
+  // Time Cap 12/15/20 selon durée, 3-4 ex circuit reps fixes
+  const timeCap = duration <= 20 ? 12 : duration <= 40 ? 15 : 20;
+  const circuitSize = Math.min(4, Math.max(3, ordered.length));
+  const circuit = ordered.slice(0, circuitSize);
+  const repMap = { Push: levelIdx===0?8:10, Pull: 5, Legs: 15, Abdos: 15, Cardio: 10, 'Full-body': 8 };
+  const exercises = circuit.map(ex => ({
+    ex, sets: 'AMRAP', reps: `${repMap[ex.Objectif] || 10} reps`, rest: 'le moins possible', cue: getTechnicalCue(ex), isSkill: isSkillOrHold(ex)
+  }));
+  return [{ title: `AMRAP ${timeCap} min`, subtitle: `Circuit ${circuitSize} exercices — max de tours`, exercises, restBetween: '—', timeCap }];
+}
+function buildHiitBlocks(ordered, levelIdx) {
+  // 40/20 (30/30 débutant) + jamais 2× même Objectif à la suite
+  const isBeginner = levelIdx === 0;
+  const on = isBeginner ? '30s ON' : '40s ON';
+  const off = isBeginner ? '30s OFF' : '20s OFF';
+  // Réordonne pour éviter même groupe consécutif (greedy)
+  const reordered = [];
+  const pool = [...ordered];
+  while (pool.length) {
+    let pickIdx = pool.findIndex(e => reordered.length===0 || e.Objectif !== reordered[reordered.length-1].ex.Objectif);
+    if (pickIdx === -1) pickIdx = 0;
+    reordered.push(pool.splice(pickIdx,1)[0]);
+  }
+  const exercises = reordered.map(ex => ({
+    ex, sets: 1, reps: `${on}`, rest: off, cue: getTechnicalCue(ex), isSkill: isSkillOrHold(ex)
+  }));
+  return [{ title: `HIIT / Circuit — ${on} / ${off}`, subtitle: 'Enchaînement sans repos local', exercises, restBetween: off }];
 }
 
-function getExerciseCount(duration) {
-  const map = { 10: 2, 15: 3, 20: 3, 25: 4, 30: 4, 35: 5, 40: 5, 45: 6, 50: 6, 55: 7, 60: 8 };
-  return map[duration] || 4;
-}
-
-function shuffleArray(arr) {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
-  return a;
+// ====== DRAFT ÉQUILIBRÉ — round-robin + skill + tri intensité ======
+function buildBalancedDraft(pool, count, goals, levelIdx) {
+  // pool déjà filtré par niveau/équipement ; on répartit par Objectif
+  const byGoal = {};
+  goals.forEach(g => byGoal[g] = shuffleArray(pool.filter(e => e.Objectif === g)));
+  // Cas mono-objectif (ex: Push seul) : pioche directe
+  const uniqueGoals = [...new Set(goals)];
+  let selected = [];
+  if (uniqueGoals.length === 1) {
+    selected = pickRandom(byGoal[uniqueGoals[0]] || pool, count);
+  } else {
+    // Round-robin : alterne les catégories (Full-body = Push/Pull/Legs/Abdos en boucle)
+    const order = ['Push','Pull','Legs','Abdos','Cardio'];
+    // on respecte l'ordre demandé mais en rotatif
+    const cycle = order.filter(o => goals.includes(o));
+    const buckets = cycle.length ? cycle : uniqueGoals;
+    let idx = 0;
+    let attempts = 0;
+    while (selected.length < count && attempts < count * 10) {
+      const cat = buckets[idx % buckets.length];
+      const bucket = byGoal[cat];
+      if (bucket && bucket.length) selected.push(bucket.shift());
+      idx++; attempts++;
+      // si tous les buckets vides, break
+      if (buckets.every(c => (byGoal[c]||[]).length===0)) break;
+    }
+    // si pas assez (pool déséquilibré), complète avec le pool restant
+    if (selected.length < count) {
+      const remaining = pool.filter(e => !selected.find(s=>s.Nom===e.Nom));
+      selected = selected.concat(pickRandom(remaining, count - selected.length));
+    }
+  }
+  // Tri neuronal : intensité décroissante (plus dur d'abord) — surcharge progressive
+  selected.sort((a,b) => parseInt(b.Intensité) - parseInt(a.Intensité));
+  // Séparation Skill vs Strength : skills en tête (SNC frais, pas d'échec)
+  const skills = selected.filter(isSkillOrHold);
+  const strength = selected.filter(e => !isSkillOrHold(e));
+  // skills aussi triés par intensité desc, puis strength
+  skills.sort((a,b)=> parseInt(b.Intensité)-parseInt(a.Intensité));
+  strength.sort((a,b)=> parseInt(b.Intensité)-parseInt(a.Intensité));
+  return [...skills, ...strength];
 }
 
 function renderSessionSummary(workout) {
@@ -962,8 +1127,10 @@ function renderSessionSummary(workout) {
   const formatIcons = { classic: 'list', hiit: 'flame', amrap: 'trophy', emom: 'clock' };
   const formatColors = { classic: 'bg-accent/10 text-accent', hiit: 'bg-orange-400/10 text-orange-400', amrap: 'bg-yellow-400/10 text-yellow-400', emom: 'bg-blue-400/10 text-blue-400' };
   const el = document.getElementById('session-summary');
+  // résumé enrichi : time cap / emom duration si présent
+  const extraInfo = workout.blocks?.[0]?.timeCap ? ` · Cap ${workout.blocks[0].timeCap}′` : workout.blocks?.[0]?.emomDuration ? ` · EMOM ${workout.blocks[0].emomDuration}′` : '';
   el.innerHTML = `
-    <div class="card p-5">
+    <div class="card p-5 border-l-4 border-accent">
       <div class="flex items-center justify-between flex-wrap gap-2 mb-4">
         <span class="text-sm font-medium text-white">Résumé de la séance</span>
         <span class="text-xs ${formatColors[workout.format]} px-3 py-1 rounded-full font-medium flex items-center gap-1.5">
@@ -986,32 +1153,35 @@ function renderSessionSummary(workout) {
           <div class="text-[11px] text-slate-400 mt-0.5">Échauf. · Principaux · Retour</div>
         </div>
         <div class="bg-slate-800/30 rounded-lg py-3 px-2">
-          <div class="text-2xl font-bold text-white flex items-center justify-center gap-1">
-            <i data-lucide="clock" class="w-4 h-4 text-slate-400"></i>
+          <div class="text-sm font-bold text-white flex items-center justify-center gap-1">
+            ${workout.blocks ? workout.blocks.length + ' bloc(s)' : workout.main.length + ' ex'}<span class="text-slate-500 text-xs">${extraInfo}</span>
           </div>
           <div class="text-[11px] text-slate-400 mt-0.5">~${workout.duration} minutes</div>
         </div>
         <div class="bg-slate-800/30 rounded-lg py-3 px-2">
           <div class="text-lg font-bold text-accent flex items-center justify-center gap-1">
-            ${Array.from({ length: parseInt(workout.main[0]?.Intensité || 3) }, () => '●').join('')}
+            ${Array.from({ length: Math.round(workout.main.reduce((s,e)=>s+parseInt(e.Intensité),0)/workout.main.length) || 3 }, () => '●').join('')}
           </div>
           <div class="text-[11px] text-slate-400 mt-0.5">Intensité moyenne</div>
         </div>
       </div>
+      ${workout.blocks ? `<div class="mt-3 text-[11px] text-slate-500 flex flex-wrap gap-2">${workout.blocks.map(b=>`<span class="bg-slate-800/50 px-2 py-1 rounded-full">${escHtml(b.title)}</span>`).join('')}</div>` : ''}
     </div>`;
   lucide.createIcons({ scope: el });
 }
 
+// ====== WORKOUT GENERATION — algorithme coach ======
 function generateWorkout() {
   const equipment = Array.from(document.querySelectorAll('#equipment-group input:checked')).map(cb => cb.value);
   const duration = parseInt(document.getElementById('duration').value);
-  const level = document.getElementById('level').value;
+  const levelStr = LEVEL_NAMES[parseInt(document.getElementById('level').value)] || 'Intermédiaire';
+  const levelIdx = LEVEL_NAMES.indexOf(levelStr);
   const goalGoals = getSelectedGoals();
   const format = document.querySelector('input[name="format"]:checked')?.value || 'classic';
-  const alternate = document.getElementById('alternate-intensity').checked;
   const levelOrder = { 'Débutant': 0, 'Intermédiaire': 1, 'Avancé': 2 };
-  const userLevel = levelOrder[level];
+  const userLevel = levelOrder[levelStr];
 
+  // Étape 1 : Filtrage pool (Niveau + Équipement + Objectifs)
   let pool = exercises.filter(ex => {
     if (!goalGoals.includes(ex.Objectif)) return false;
     if (levelOrder[ex.Difficulté] > userLevel) return false;
@@ -1024,29 +1194,26 @@ function generateWorkout() {
     return null;
   }
 
+  // Étape 2 : Draft équilibré round-robin + tri neuronal + bloc Skill
+  const count = getExerciseCount(duration);
+  const ordered = buildBalancedDraft(pool, Math.min(count, pool.length), goalGoals, levelIdx);
+
+  // Étape 3 : Application des Formats — génération des consignes sets/reps/repos
+  let blocks;
+  if (format === 'classic') blocks = buildClassicBlocks(ordered, levelIdx);
+  else if (format === 'emom') blocks = buildEmomBlocks(ordered, duration, levelIdx);
+  else if (format === 'amrap') blocks = buildAmrapBlocks(ordered, duration, levelIdx);
+  else if (format === 'hiit') blocks = buildHiitBlocks(ordered, levelIdx);
+  else blocks = buildClassicBlocks(ordered, levelIdx);
+
+  // Aplatit pour compatibilité (favorites, export simple, reroll)
+  const main = ordered;
+
+  // Étape 4 : Échauffement préhab + retour calme décompression (dépend du contenu final)
   const warmup = getWarmupForGoal(goalGoals, duration);
   const cooldown = getCooldownForGoal(goalGoals, duration);
-  const count = getExerciseCount(duration);
-  let main = shuffleArray(pool).slice(0, Math.min(count, pool.length));
 
-  if (alternate) {
-    main.sort((a, b) => parseInt(b.Intensité) - parseInt(a.Intensité));
-    const high = main.filter(e => parseInt(e.Intensité) >= 3);
-    const low = main.filter(e => parseInt(e.Intensité) < 3);
-    const alternated = [];
-    let hi = 0, lo = 0;
-    for (let i = 0; i < main.length; i++) {
-      if (i % 2 === 0 && hi < high.length) alternated.push(high[hi++]);
-      else if (lo < low.length) alternated.push(low[lo++]);
-      else if (hi < high.length) alternated.push(high[hi++]);
-      else if (lo < low.length) alternated.push(low[lo++]);
-    }
-    main = alternated;
-  } else {
-    main.sort((a, b) => parseInt(b.Intensité) - parseInt(a.Intensité));
-  }
-
-  return { warmup, main, cooldown, format, goal: goalGoals, duration };
+  return { warmup, main, cooldown, blocks, format, goal: goalGoals, duration, level: levelStr, levelIdx };
 }
 
 function renderWorkout(workout) {
@@ -1057,17 +1224,39 @@ function renderWorkout(workout) {
   renderSessionSummary(workout);
   const warmupDiv = document.getElementById('warmup-section');
   warmupDiv.innerHTML = `
-    <div class="card p-5">
+    <div class="card p-5 border-l-4 border-orange-400">
       <h3 class="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-        <i data-lucide="sun" class="w-4 h-4 text-orange-400"></i> Échauffement
+        <i data-lucide="sun" class="w-4 h-4 text-orange-400"></i> Échauffement — Préhab poignets & épaules inclus si Push/Pull
       </h3>
       <div class="space-y-2">${workout.warmup.map(ex => renderExerciseMini(ex, getWarmupInstruction(ex))).join('')}</div>
     </div>`;
 
   const mainDiv = document.getElementById('main-section');
   const formatLabel = { classic: 'Classique', hiit: 'HIIT / Circuit', amrap: 'AMRAP', emom: 'EMOM' }[workout.format];
-  mainDiv.innerHTML = `
-    <div class="card p-5">
+  // Rendu par Blocs — fiche de programmation
+  let blocksHtml = '';
+  if (workout.blocks && workout.blocks.length) {
+    blocksHtml = workout.blocks.map((block, bi) => {
+      const isSkillBlock = block.exercises.some(e=> e.isSkill);
+      const blockIcon = isSkillBlock ? 'brain' : block.title.includes('Superset') ? 'zap' : block.title.includes('EMOM') ? 'clock' : block.title.includes('AMRAP') ? 'trophy' : 'flame';
+      const borderColor = isSkillBlock ? 'border-l-4 border-violet-400' : block.title.includes('Superset') ? 'border-l-4 border-accent' : 'border-l-4 border-slate-600';
+      return `<div class="card p-5 ${borderColor}">
+        <div class="flex items-center justify-between mb-1">
+          <h4 class="text-sm font-bold text-white flex items-center gap-2">
+            <i data-lucide="${blockIcon}" class="w-4 h-4 ${isSkillBlock?'text-violet-400':'text-accent'}"></i>
+            ${escHtml(block.title)}
+          </h4>
+          <span class="text-[11px] bg-slate-800 text-slate-400 px-2 py-1 rounded-full">${escHtml(block.subtitle || '')}</span>
+        </div>
+        ${isSkillBlock ? '<p class="text-[11px] text-violet-300 mb-3">🧠 SNC frais — qualité > quantité, stop avant échec.</p>' : ''}
+        <div class="space-y-3">${block.exercises.map((item, ei) => renderBlockExercise(item, bi, ei)).join('')}</div>
+        ${block.restBetween && block.restBetween !== '—' ? `<p class="text-[11px] text-slate-500 mt-3">Repos inter-bloc : <span class="text-slate-300 font-medium">${escHtml(block.restBetween)}</span></p>` : ''}
+        ${block.timeCap ? `<p class="text-[11px] text-yellow-400 mt-2">⏱ Time Cap : ${block.timeCap} min — max de tours !</p>` : ''}
+        ${block.emomDuration ? `<p class="text-[11px] text-blue-400 mt-2">⏱ EMOM ${block.emomDuration}′ — alterne chaque minute, ~30-40s de repos restant.</p>` : ''}
+      </div>`;
+    }).join('');
+  } else {
+    blocksHtml = `<div class="card p-5 border-l-4 border-accent">
       <div class="flex items-center justify-between mb-3">
         <h3 class="text-sm font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-2">
           <i data-lucide="zap" class="w-4 h-4 text-accent"></i> Corps de séance
@@ -1076,12 +1265,23 @@ function renderWorkout(workout) {
       </div>
       <div class="space-y-2">${workout.main.map((ex, i) => renderExerciseCard(ex, i)).join('')}</div>
     </div>`;
+  }
+
+  // Si blocks existent, on affiche l'en-tête global + blocks ; sinon fallback
+  mainDiv.innerHTML = workout.blocks ? `
+    <div class="flex items-center justify-between mb-2 px-1">
+      <h3 class="text-sm font-semibold text-slate-200 uppercase tracking-wider flex items-center gap-2">
+        <i data-lucide="zap" class="w-4 h-4 text-accent"></i> Corps de séance — ${workout.blocks.length} bloc(s)
+      </h3>
+      <span class="text-xs bg-accent/10 text-accent px-2.5 py-1 rounded-full font-medium">${formatLabel} · ${workout.level}</span>
+    </div>
+    <div class="space-y-4">${blocksHtml}</div>` : blocksHtml;
 
   const coolDiv = document.getElementById('cooldown-section');
   coolDiv.innerHTML = `
-    <div class="card p-5">
+    <div class="card p-5 border-l-4 border-blue-400">
       <h3 class="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-        <i data-lucide="thermometer" class="w-4 h-4 text-blue-400"></i> Retour au calme
+        <i data-lucide="thermometer" class="w-4 h-4 text-blue-400"></i> Retour au calme — décompression incluse si Pull
       </h3>
       <div class="space-y-2">${workout.cooldown.map(ex => renderExerciseMini(ex, getCooldownInstruction(ex))).join('')}</div>
     </div>`;
@@ -1093,6 +1293,46 @@ function renderWorkout(workout) {
   renderExport(workout);
   document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
   notify('Séance générée !');
+}
+
+function renderBlockExercise(item, blockIdx, exIdx) {
+  const { ex, sets, reps, rest, cue } = item;
+  const dots = Array(5).fill(0).map((_, j) =>
+    `<span class="${j < parseInt(ex.Intensité) ? INTENSITY_COLORS[j] || 'text-accent' : 'text-slate-700'}">●</span>`
+  ).join('');
+  const skillBadge = item.isSkill ? '<span class="text-[10px] bg-violet-500/20 text-violet-300 px-2 py-0.5 rounded-full font-medium">SKILL</span>' : '';
+  const repsDisplay = sets === 'AMRAP' ? reps : `${sets} × ${reps}`;
+  return `<div class="flex gap-3 p-3 rounded-xl bg-slate-800/40 border border-slate-700/30 ${item.isSkill?'ring-1 ring-violet-400/30':''}">
+    <div class="w-8 h-8 rounded-lg ${item.isSkill?'bg-violet-500/20':'bg-accent/10'} flex items-center justify-center flex-shrink-0 mt-0.5">
+      <span class="text-xs font-bold ${item.isSkill?'text-violet-300':'text-accent'}">${exIdx + 1}</span>
+    </div>
+    <div class="flex-1 min-w-0">
+      <div class="flex items-center gap-2 flex-wrap">
+        <span class="font-medium text-white text-sm">${escHtml(ex.Nom)}</span>
+        <span class="text-xs bg-slate-700/50 text-slate-300 px-2 py-0.5 rounded-full">${escHtml(ex.Objectif)}</span>
+        ${skillBadge}
+      </div>
+      <div class="flex flex-wrap items-center gap-2 mt-1.5">
+        <span class="text-xs bg-accent/10 text-accent px-2 py-1 rounded-full font-medium">${escHtml(String(repsDisplay))}</span>
+        <span class="text-xs bg-slate-700/50 text-slate-300 px-2 py-1 rounded-full flex items-center gap-1"><i data-lucide="clock" class="w-3 h-3"></i> Repos ${escHtml(String(rest))}</span>
+        <span class="text-[11px] text-slate-500 ml-1">${escHtml(ex.Muscles||'')}</span>
+      </div>
+      <div class="flex items-center gap-2 mt-1 text-[11px] text-slate-500">
+        <span>${escHtml(ex.Équipement||'Aucun')}</span><span class="tracking-wider">${dots}</span><span class="text-slate-600">·</span><span>${escHtml(ex.Difficulté)}</span>
+      </div>
+      <p class="text-[11px] text-amber-200/80 mt-2 bg-amber-500/10 border border-amber-500/20 rounded-lg px-2.5 py-1.5 flex gap-1.5">
+        <i data-lucide="lightbulb" class="w-3 h-3 flex-shrink-0 mt-0.5"></i><span>${escHtml(cue)}</span>
+      </p>
+    </div>
+    <button onclick="rerollExercise(${findMainIndex(ex)})" class="btn-ghost p-2 rounded-lg flex-shrink-0 self-start" title="Remplacer">
+      <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+    </button>
+  </div>`;
+}
+function findMainIndex(exRef) {
+  if (!currentWorkout || !currentWorkout.main) return 0;
+  const idx = currentWorkout.main.findIndex(e => e.Nom === exRef.Nom);
+  return idx >= 0 ? idx : 0;
 }
 
 function renderExerciseMini(ex, instruction) {
@@ -1109,9 +1349,10 @@ function renderExerciseMini(ex, instruction) {
 
 function renderExerciseCard(ex, index) {
   const dots = Array(5).fill(0).map((_, j) =>
-    `<span class="${j < parseInt(ex.Intensité) ? 'text-accent' : 'text-slate-700'}">●</span>`
+    `<span class="${j < parseInt(ex.Intensité) ? INTENSITY_COLORS[j] || 'text-accent' : 'text-slate-700'}">●</span>`
   ).join('');
-  const repsLabel = currentWorkout && currentWorkout.format === 'classic' ? `<span class="text-xs text-accent font-medium ml-auto">${generateReps(ex.Difficulté, ex.Intensité)}</span>` : '';
+  const cue = getTechnicalCue(ex);
+  const skillBadge = isSkillOrHold(ex) ? '<span class="text-[10px] bg-violet-500/20 text-violet-300 px-1.5 py-0.5 rounded-full">SKILL</span>' : '';
   const musclesLabel = ex.Muscles ? `<span class="text-[11px] text-slate-500">${escHtml(ex.Muscles)}</span>` : '';
   return `<div class="exercise-card p-4 flex items-center gap-4" data-index="${index}">
     <div class="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center flex-shrink-0">
@@ -1121,13 +1362,14 @@ function renderExerciseCard(ex, index) {
       <div class="flex items-center gap-2">
         <span class="font-medium text-white">${escHtml(ex.Nom)}</span>
         <span class="text-xs bg-slate-700/50 text-slate-300 px-2 py-0.5 rounded-full">${escHtml(ex.Objectif)}</span>
-        ${repsLabel}
+        ${skillBadge}
       </div>
       <div class="flex items-center gap-3 mt-1 text-xs text-slate-500">
         <span>${escHtml(ex.Équipement || 'Aucun')}</span>
         <span class="tracking-wider">${dots}</span>
       </div>
       ${musclesLabel ? `<div class="mt-1">${musclesLabel}</div>` : ''}
+      <p class="text-[11px] text-amber-200/70 mt-1">${escHtml(cue)}</p>
     </div>
     <button onclick="rerollExercise(${index})" class="btn-ghost p-2 rounded-lg flex-shrink-0" title="Remplacer cet exercice">
       <i data-lucide="refresh-cw" class="w-4 h-4"></i>
@@ -1138,10 +1380,11 @@ function renderExerciseCard(ex, index) {
 function rerollExercise(index) {
   if (!currentWorkout) return;
   const equipment = Array.from(document.querySelectorAll('#equipment-group input:checked')).map(cb => cb.value);
-  const level = document.getElementById('level').value;
+  const levelStr = LEVEL_NAMES[parseInt(document.getElementById('level').value)] || 'Intermédiaire';
+  const levelIdx = LEVEL_NAMES.indexOf(levelStr);
   const goalGoals = getSelectedGoals();
   const levelOrder = { 'Débutant': 0, 'Intermédiaire': 1, 'Avancé': 2 };
-  const userLevel = levelOrder[level];
+  const userLevel = levelOrder[levelStr];
   const currentEx = currentWorkout.main[index];
 
   let pool = exercises.filter(ex => {
@@ -1151,26 +1394,48 @@ function rerollExercise(index) {
     if (ex.Équipement !== 'Aucun' && !equipment.includes(ex.Équipement)) return false;
     const usedNames = currentWorkout.main.map(e => e.Nom);
     if (usedNames.includes(ex.Nom)) return false;
+    // Préserve l'équilibre : évite de piocher même Objectif que voisin si HIIT
+    if (currentWorkout.format === 'hiit' && usedNames.length) {
+      const prev = currentWorkout.main[index-1];
+      const next = currentWorkout.main[index+1];
+      if ((prev && ex.Objectif === prev.Objectif) || (next && ex.Objectif === next.Objectif)) return false;
+    }
     return true;
   });
+  // fallback sans contrainte HIIT si pool vide
+  if (pool.length === 0 && currentWorkout.format === 'hiit') {
+    pool = exercises.filter(ex => {
+      if (ex.Nom === currentEx.Nom) return false;
+      if (!goalGoals.includes(ex.Objectif)) return false;
+      if (levelOrder[ex.Difficulté] > userLevel) return false;
+      if (ex.Équipement !== 'Aucun' && !equipment.includes(ex.Équipement)) return false;
+      if (currentWorkout.main.map(e=>e.Nom).includes(ex.Nom)) return false;
+      return true;
+    });
+  }
 
   if (pool.length === 0) { notify('Aucun exercice alternatif disponible', 'error'); return; }
 
-  currentWorkout.main[index] = pool[Math.floor(Math.random() * pool.length)];
-  const mainDiv = document.getElementById('main-section');
-  const formatLabel = { classic: 'Classique', hiit: 'HIIT / Circuit', amrap: 'AMRAP', emom: 'EMOM' }[currentWorkout.format];
-  mainDiv.innerHTML = `
-    <div class="card p-5">
-      <div class="flex items-center justify-between mb-3">
-        <h3 class="text-sm font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-          <i data-lucide="zap" class="w-4 h-4 text-accent"></i> Corps de séance
-        </h3>
-        <span class="text-xs bg-accent/10 text-accent px-2.5 py-1 rounded-full font-medium">${formatLabel}</span>
-      </div>
-      <div class="space-y-2">${currentWorkout.main.map((ex, i) => renderExerciseCard(ex, i)).join('')}</div>
-    </div>`;
-  lucide.createIcons({ scope: mainDiv });
-  notify('Exercice remplacé');
+  const replacement = pool[Math.floor(Math.random() * pool.length)];
+  currentWorkout.main[index] = replacement;
+  // Reconstruit les blocs pour garder la cohérence format / skill / superset
+  const ordered = [...currentWorkout.main];
+  // Retri intensité + skill en tête pour respecter la règle SNC
+  ordered.sort((a,b)=> parseInt(b.Intensité)-parseInt(a.Intensité));
+  const skills = ordered.filter(isSkillOrHold);
+  const strength = ordered.filter(e=> !isSkillOrHold(e));
+  skills.sort((a,b)=> parseInt(b.Intensité)-parseInt(a.Intensité));
+  strength.sort((a,b)=> parseInt(b.Intensité)-parseInt(a.Intensité));
+  const reordered = [...skills, ...strength];
+  currentWorkout.main = reordered;
+  // Recalcule les blocks selon le format
+  if (currentWorkout.format === 'classic') currentWorkout.blocks = buildClassicBlocks(reordered, levelIdx);
+  else if (currentWorkout.format === 'emom') currentWorkout.blocks = buildEmomBlocks(reordered, currentWorkout.duration, levelIdx);
+  else if (currentWorkout.format === 'amrap') currentWorkout.blocks = buildAmrapBlocks(reordered, currentWorkout.duration, levelIdx);
+  else if (currentWorkout.format === 'hiit') currentWorkout.blocks = buildHiitBlocks(reordered, levelIdx);
+
+  renderWorkout(currentWorkout);
+  notify('Exercice remplacé — blocs recalculés');
 }
 
 // ====== FAVORITES ======
@@ -1262,10 +1527,24 @@ function exportPDF() { window.print(); }
 
 function exportCSV() {
   if (!currentWorkout) return;
-  const lines = ['Type,Nom,Objectif,Difficulté,Intensité'];
-  currentWorkout.warmup.forEach(ex => lines.push(`Échauffement,${ex.Nom},${ex.Objectif},${ex.Difficulté || ''},${ex.Intensité || ''}`));
-  currentWorkout.main.forEach(ex => lines.push(`Principal,${ex.Nom},${ex.Objectif},${ex.Difficulté},${ex.Intensité}`));
-  currentWorkout.cooldown.forEach(ex => lines.push(`Retour au calme,${ex.Nom},${ex.Objectif},${ex.Difficulté || ''},${ex.Intensité || ''}`));
+  // Export enrichi : Blocs + Sets/Reps/Repos/Cues — rétrocompatible (anciennes colonnes conservées)
+  const header = 'Bloc,Type,Nom,Objectif,Difficulté,Intensité,Muscles,Séries,Reps/Reps,Repos,Cue';
+  const lines = [header];
+  const esc = v => `"${String(v||'').replace(/"/g,'""')}"`;
+  currentWorkout.warmup.forEach(ex => lines.push(['—','Échauffement',ex.Nom,ex.Objectif,ex.Difficulté||'',ex.Intensité||'',ex.Muscles||'','',getWarmupInstruction(ex),'',''].map(esc).join(',')));
+  if (currentWorkout.blocks && currentWorkout.blocks.length) {
+    currentWorkout.blocks.forEach(b => {
+      b.exercises.forEach(item => {
+        const sets = item.sets ?? '';
+        const reps = item.reps ?? '';
+        const rest = item.rest ?? '';
+        lines.push([b.title,'Principal',item.ex.Nom,item.ex.Objectif,item.ex.Difficulté||'',item.ex.Intensité||'',item.ex.Muscles||'',sets,reps,rest,item.cue||''].map(esc).join(','));
+      });
+    });
+  } else {
+    currentWorkout.main.forEach(ex => lines.push(['—','Principal',ex.Nom,ex.Objectif,ex.Difficulté||'',ex.Intensité||'',ex.Muscles||'','','','',''].map(esc).join(',')));
+  }
+  currentWorkout.cooldown.forEach(ex => lines.push(['—','Retour au calme',ex.Nom,ex.Objectif,ex.Difficulté||'',ex.Intensité||'',ex.Muscles||'','',getCooldownInstruction(ex),'',''].map(esc).join(',')));
   const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
@@ -1274,6 +1553,8 @@ function exportCSV() {
   URL.revokeObjectURL(a.href);
   notify('Fichier CSV téléchargé');
 }
+// Alias rétrocompatibilité : ancien nom downloadCSV
+const downloadCSV = exportCSV;
 
 // ====== TAB SYSTEM ======
 document.querySelectorAll('.tab-btn').forEach(btn => {
