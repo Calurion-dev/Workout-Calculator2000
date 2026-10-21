@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "scripts": {
     "build:css": "tailwindcss -c tailwind.config.js -i input.css -o styles.css --minify",
-    "test": "node tests/smoke.cjs"
+    "test": "node tests/smoke.cjs && node tests/timer.cjs"
   },
   "devDependencies": {
     "playwright": "1.64.1",

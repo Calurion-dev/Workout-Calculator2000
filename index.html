@@ -6,6 +6,7 @@
 <title>Calisthenics Workout Generator</title>
 <meta name="description" content="Générateur d'entraînements aléatoires de calisthénie et street workout">
 <link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="timer.css">
 <style>
 * { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
 body { background: #0f172a; color: #e2e8f0; }
@@ -67,20 +68,25 @@ input[type="checkbox"] { accent-color: #22c55e; }
         <p class="text-xs text-slate-400">Street Workout · Séances intelligentes</p>
       </div>
     </div>
-    <div class="flex items-center gap-3 text-xs text-slate-500">
+    <div class="flex items-center gap-2 sm:gap-3 text-xs text-slate-500">
+      <button id="timer-shortcut" class="timer-shortcut" title="Ouvrir le chronomètre WOD" aria-label="Ouvrir le chronomètre WOD">
+        <i data-lucide="timer" class="w-4 h-4"></i>
+      </button>
       <span class="flex items-center gap-1.5"><i data-lucide="zap" class="w-3.5 h-3.5 text-accent"></i><span id="exercise-count">0</span></span>
       <span class="flex items-center gap-1.5"><i data-lucide="activity" class="w-3.5 h-3.5 text-orange-400"></i><span id="warmup-count">0</span></span>
     </div>
   </header>
 
-  <div class="flex gap-1 mb-6 no-print border-b border-slate-800">
-    <button class="tab-btn active flex items-center gap-2 px-5 py-3 text-sm font-medium text-slate-400 border-b-2 border-transparent transition-all" data-tab="config-session">
-      <i data-lucide="sliders" class="w-4 h-4"></i> Configurer ma séance
+  <div class="flex gap-1 mb-6 no-print border-b border-slate-800 overflow-x-auto">
+    <button class="tab-btn active flex items-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-3 text-sm font-medium text-slate-400 border-b-2 border-transparent transition-all whitespace-nowrap" data-tab="config-session">
+      <i data-lucide="sliders" class="w-4 h-4"></i><span class="hidden sm:inline">Configurer ma séance</span><span class="sm:hidden">Séance</span>
     </button>
-    <button class="tab-btn flex items-center gap-2 px-5 py-3 text-sm font-medium text-slate-400 border-b-2 border-transparent transition-all" data-tab="database">
-      <i data-lucide="database" class="w-4 h-4"></i> Base d'exercices
+    <button class="tab-btn flex items-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-3 text-sm font-medium text-slate-400 border-b-2 border-transparent transition-all whitespace-nowrap" data-tab="database">
+      <i data-lucide="database" class="w-4 h-4"></i><span class="hidden sm:inline">Base d'exercices</span><span class="sm:hidden">Exercices</span>
     </button>
-
+    <button class="tab-btn flex items-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-3 text-sm font-medium text-slate-400 border-b-2 border-transparent transition-all whitespace-nowrap" data-tab="timer">
+      <i data-lucide="timer" class="w-4 h-4"></i><span class="hidden sm:inline">Chrono WOD</span><span class="sm:hidden">Chrono</span>
+    </button>
   </div>
 
   <div id="tab-config-session" class="tab-content">
@@ -303,6 +309,10 @@ input[type="checkbox"] { accent-color: #22c55e; }
   </div>
 
 </div>
+  </div>
+
+  <div id="tab-timer" class="tab-content hidden">
+    <div id="timer-app"></div>
   </div>
 </div>
 
@@ -1541,11 +1551,7 @@ function loadFavorite(id) {
   const fav = favorites.find(f => f.id === id);
   if (!fav) return;
   renderWorkout(fav.workout);
-  // switch to session tab if needed
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.querySelector('[data-tab="config-session"]')?.classList.add('active');
-  document.querySelectorAll('.tab-content').forEach(tc => tc.classList.add('hidden'));
-  document.getElementById('tab-config-session')?.classList.remove('hidden');
+  switchTab('config-session');
   notify(`Séance "${fav.name}" chargée`);
 }
 function deleteFavorite(id) {
@@ -1602,14 +1608,19 @@ function exportCSV() {
 }
 
 // ====== TAB SYSTEM ======
+function switchTab(name) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+  document.querySelectorAll('.tab-content').forEach(tc => tc.classList.add('hidden'));
+  document.getElementById('tab-' + name)?.classList.remove('hidden');
+  document.getElementById('timer-shortcut')?.classList.toggle('active', name === 'timer');
+  const activeBtn = document.querySelector('.tab-btn.active');
+  if (activeBtn?.parentElement) activeBtn.parentElement.scrollLeft = Math.max(0, activeBtn.offsetLeft - 12);
+  document.dispatchEvent(new CustomEvent('site:tabchange', { detail: name }));
+}
 document.querySelectorAll('.tab-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    document.querySelectorAll('.tab-content').forEach(tc => tc.classList.add('hidden'));
-    document.getElementById('tab-' + btn.dataset.tab).classList.remove('hidden');
-  });
+  btn.addEventListener('click', () => switchTab(btn.dataset.tab));
 });
+window.switchTab = switchTab;
 
 // ====== GENERATE BUTTON ======
 document.getElementById('generate-btn').addEventListener('click', () => {
@@ -1633,5 +1644,6 @@ loadFavorites();
 refreshIcons();
 document.querySelector('.format-card[data-format="classic"]')?.classList.add('selected');
 </script>
+<script src="timer.js"></script>
 </body>
 </html>
