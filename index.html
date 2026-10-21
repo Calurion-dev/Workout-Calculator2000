@@ -5,26 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Calisthenics Workout Generator</title>
 <meta name="description" content="Générateur d'entraînements aléatoires de calisthénie et street workout">
-<script src="https://cdn.tailwindcss.com"></script>
-<script>
-tailwind.config = {
-  darkMode: 'class',
-  theme: {
-    extend: {
-      colors: {
-        accent: { DEFAULT: '#22c55e', light: '#4ade80', dark: '#16a34a' },
-        surface: '#1e293b',
-        'surface-hover': '#334155',
-        card: '#1a2332',
-      }
-    }
-  }
-}
-</script>
-<script src="https://unpkg.com/lucide@latest"></script>
+<link rel="stylesheet" href="styles.css">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-* { font-family: 'Inter', system-ui, sans-serif; }
+* { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
 body { background: #0f172a; color: #e2e8f0; }
 .tab-btn.active { color: #22c55e; border-bottom-color: #22c55e; }
 .sub-tab-btn { padding: 0.5rem 1rem; font-size: 0.875rem; font-weight: 500; color: #64748b; border-bottom: 2px solid transparent; transition: all 0.2s; cursor: pointer; }
@@ -49,17 +32,19 @@ body { background: #0f172a; color: #e2e8f0; }
 input, select, textarea { background: #0f172a; border: 1px solid #334155; border-radius: 0.5rem; color: #e2e8f0; padding: 0.5rem 0.75rem; outline: none; transition: border-color 0.2s; }
 input:focus, select:focus, textarea:focus { border-color: #22c55e; box-shadow: 0 0 0 2px rgba(34,197,94,0.15); }
 input[type="checkbox"] { accent-color: #22c55e; }
-.sort-btn { cursor: pointer; user-select: none; transition: color 0.15s; }
+.sort-btn { cursor: pointer; user-select: none; transition: color 0.15s; background: none; border: 0; padding: 0; font: inherit; color: inherit; }
 .sort-btn:hover { color: #22c55e; }
 .sort-asc::after { content: ' ▲'; font-size: 0.6rem; }
 .sort-desc::after { content: ' ▼'; font-size: 0.6rem; }
 .format-card.selected { border-color: #22c55e !important; background: rgba(34,197,94,0.06); }
+.format-card:has(input:focus-visible) { outline: 2px solid #22c55e; outline-offset: 2px; }
 @media print {
-  body { background: white !important; color: #000 !important; }
+  @page { margin: 12mm; }
+  body { background: white !important; color: #111 !important; }
   .no-print { display: none !important; }
-  .card, .exercise-card { background: #f8fafc !important; border: 1px solid #ddd !important; }
-  .print-only { display: block !important; }
-  h1, h2, h3 { color: #000 !important; }
+  #results, #results * { color: #111 !important; background: transparent !important; box-shadow: none !important; }
+  #results .card, #results .exercise-card { border: 1px solid #ccc !important; break-inside: avoid; }
+  #results .card { padding: 12px !important; }
 }
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: #0f172a; }
@@ -99,7 +84,7 @@ input[type="checkbox"] { accent-color: #22c55e; }
   </div>
 
   <div id="tab-config-session" class="tab-content">
-    <div class="card p-6 mb-6">
+    <div class="card p-6 mb-6 no-print">
       <h2 class="text-lg font-semibold text-white mb-5 flex items-center gap-2">
         <i data-lucide="settings" class="w-5 h-5 text-accent"></i>
         Configurer ma séance
@@ -119,7 +104,7 @@ input[type="checkbox"] { accent-color: #22c55e; }
 
         <div class="space-y-4">
           <div>
-            <label class="block text-sm font-medium text-slate-300 mb-2">Durée : <span id="duration-value">30 min</span></label>
+            <label class="block text-sm font-medium text-slate-300 mb-2">Durée cible : <span id="duration-value">30 min</span></label>
             <input type="range" id="duration" min="10" max="60" value="30" step="1" class="w-full accent-accent">
             <div class="flex justify-between text-[10px] text-slate-600 mt-0.5 px-0.5">
               <span>10</span><span>15</span><span>20</span><span>25</span><span>30</span><span>35</span><span>40</span><span>45</span><span>50</span><span>55</span><span>60</span>
@@ -152,7 +137,7 @@ input[type="checkbox"] { accent-color: #22c55e; }
           <label class="block text-sm font-medium text-slate-300 mb-3">Format</label>
           <div id="format-group" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <label class="format-card cursor-pointer card p-3 border-2 border-slate-700/50 hover:border-accent/40 transition-all duration-200 block" data-format="classic">
-              <input type="radio" name="format" value="classic" checked class="hidden">
+              <input type="radio" name="format" value="classic" checked class="sr-only">
               <div class="flex items-start gap-3">
                 <div class="w-9 h-9 rounded-lg bg-accent/10 flex items-center justify-center flex-shrink-0 mt-0.5">
                   <i data-lucide="list" class="w-5 h-5 text-accent"></i>
@@ -165,7 +150,7 @@ input[type="checkbox"] { accent-color: #22c55e; }
               </div>
             </label>
             <label class="format-card cursor-pointer card p-3 border-2 border-slate-700/50 hover:border-accent/40 transition-all duration-200 block" data-format="hiit">
-              <input type="radio" name="format" value="hiit" class="hidden">
+              <input type="radio" name="format" value="hiit" class="sr-only">
               <div class="flex items-start gap-3">
                 <div class="w-9 h-9 rounded-lg bg-orange-400/10 flex items-center justify-center flex-shrink-0 mt-0.5">
                   <i data-lucide="flame" class="w-5 h-5 text-orange-400"></i>
@@ -178,7 +163,7 @@ input[type="checkbox"] { accent-color: #22c55e; }
               </div>
             </label>
             <label class="format-card cursor-pointer card p-3 border-2 border-slate-700/50 hover:border-accent/40 transition-all duration-200 block" data-format="amrap">
-              <input type="radio" name="format" value="amrap" class="hidden">
+              <input type="radio" name="format" value="amrap" class="sr-only">
               <div class="flex items-start gap-3">
                 <div class="w-9 h-9 rounded-lg bg-yellow-400/10 flex items-center justify-center flex-shrink-0 mt-0.5">
                   <i data-lucide="trophy" class="w-5 h-5 text-yellow-400"></i>
@@ -191,7 +176,7 @@ input[type="checkbox"] { accent-color: #22c55e; }
               </div>
             </label>
             <label class="format-card cursor-pointer card p-3 border-2 border-slate-700/50 hover:border-accent/40 transition-all duration-200 block" data-format="emom">
-              <input type="radio" name="format" value="emom" class="hidden">
+              <input type="radio" name="format" value="emom" class="sr-only">
               <div class="flex items-start gap-3">
                 <div class="w-9 h-9 rounded-lg bg-blue-400/10 flex items-center justify-center flex-shrink-0 mt-0.5">
                   <i data-lucide="clock" class="w-5 h-5 text-blue-400"></i>
@@ -228,7 +213,7 @@ input[type="checkbox"] { accent-color: #22c55e; }
       <div id="export-section" class="no-print flex gap-3"></div>
     </div>
 
-    <div id="favorites-section" class="card p-5 mt-6">
+    <div id="favorites-section" class="card p-5 mt-6 no-print">
       <div class="flex items-center justify-between mb-3">
         <h3 class="text-sm font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-2">
           <i data-lucide="star" class="w-4 h-4 text-yellow-400"></i> Mes séances types
@@ -268,12 +253,12 @@ input[type="checkbox"] { accent-color: #22c55e; }
           <table class="w-full text-sm">
             <thead>
               <tr class="text-slate-400 border-b border-slate-800">
-                <th class="text-left py-3 px-2 font-medium sort-btn" data-sort="Nom">Nom</th>
-                <th class="text-left py-3 px-2 font-medium sort-btn" data-sort="Objectif">Objectif</th>
-                <th class="text-left py-3 px-2 font-medium sort-btn" data-sort="Muscles">Muscles</th>
-                <th class="text-left py-3 px-2 font-medium sort-btn" data-sort="Difficulté">Difficulté</th>
-                <th class="text-left py-3 px-2 font-medium sort-btn" data-sort="Équipement">Équipement</th>
-                <th class="text-left py-3 px-2 font-medium sort-btn" data-sort="Intensité">Intensité</th>
+                <th scope="col" class="text-left py-3 px-2 font-medium"><button type="button" class="sort-btn" data-sort="Nom">Nom</button></th>
+                <th scope="col" class="text-left py-3 px-2 font-medium"><button type="button" class="sort-btn" data-sort="Objectif">Objectif</button></th>
+                <th scope="col" class="text-left py-3 px-2 font-medium"><button type="button" class="sort-btn" data-sort="Muscles">Muscles</button></th>
+                <th scope="col" class="text-left py-3 px-2 font-medium"><button type="button" class="sort-btn" data-sort="Difficulté">Difficulté</button></th>
+                <th scope="col" class="text-left py-3 px-2 font-medium"><button type="button" class="sort-btn" data-sort="Équipement">Équipement</button></th>
+                <th scope="col" class="text-left py-3 px-2 font-medium"><button type="button" class="sort-btn" data-sort="Intensité">Intensité</button></th>
                 <th class="text-right py-3 px-2 font-medium">Actions</th>
               </tr>
             </thead>
@@ -303,12 +288,12 @@ input[type="checkbox"] { accent-color: #22c55e; }
           <table class="w-full text-sm">
             <thead>
               <tr class="text-slate-400 border-b border-slate-800">
-                <th class="text-left py-3 px-2 font-medium sort-btn" data-sort="Nom">Nom</th>
-                <th class="text-left py-3 px-2 font-medium sort-btn" data-sort="Type">Type</th>
-                <th class="text-left py-3 px-2 font-medium sort-btn" data-sort="Objectif">Objectif</th>
-                <th class="text-left py-3 px-2 font-medium sort-btn" data-sort="Muscles">Muscles</th>
-                <th class="text-left py-3 px-2 font-medium sort-btn" data-sort="Difficulté">Difficulté</th>
-                <th class="text-left py-3 px-2 font-medium sort-btn" data-sort="Intensité">Intensité</th>
+                <th scope="col" class="text-left py-3 px-2 font-medium"><button type="button" class="sort-btn" data-sort="Nom">Nom</button></th>
+                <th scope="col" class="text-left py-3 px-2 font-medium"><button type="button" class="sort-btn" data-sort="Type">Type</button></th>
+                <th scope="col" class="text-left py-3 px-2 font-medium"><button type="button" class="sort-btn" data-sort="Objectif">Objectif</button></th>
+                <th scope="col" class="text-left py-3 px-2 font-medium"><button type="button" class="sort-btn" data-sort="Muscles">Muscles</button></th>
+                <th scope="col" class="text-left py-3 px-2 font-medium"><button type="button" class="sort-btn" data-sort="Difficulté">Difficulté</button></th>
+                <th scope="col" class="text-left py-3 px-2 font-medium"><button type="button" class="sort-btn" data-sort="Intensité">Intensité</button></th>
                 <th class="text-right py-3 px-2 font-medium">Actions</th>
               </tr>
             </thead>
@@ -321,7 +306,7 @@ input[type="checkbox"] { accent-color: #22c55e; }
   </div>
 </div>
 
-<div id="exercise-modal" class="fixed inset-0 z-50 hidden modal-overlay flex items-center justify-center p-4">
+<div id="exercise-modal" class="fixed inset-0 z-50 hidden modal-overlay flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-hidden="true">
   <div class="card p-6 w-full max-w-md" id="modal-content">
     <h3 class="text-lg font-semibold text-white mb-4" id="modal-title">Ajouter un exercice</h3>
     <div class="space-y-3">
@@ -364,9 +349,9 @@ input[type="checkbox"] { accent-color: #22c55e; }
   </div>
 </div>
 
-<div id="favorite-modal" class="fixed inset-0 z-50 hidden modal-overlay flex items-center justify-center p-4">
+<div id="favorite-modal" class="fixed inset-0 z-50 hidden modal-overlay flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="favorite-modal-title" aria-hidden="true">
   <div class="card p-6 w-full max-w-sm">
-    <h3 class="text-base font-semibold text-white mb-1">Sauvegarder la séance</h3>
+    <h3 class="text-base font-semibold text-white mb-1" id="favorite-modal-title">Sauvegarder la séance</h3>
     <p class="text-xs text-slate-400 mb-3">Donne un nom à ta séance type.</p>
     <input id="favorite-name" class="w-full" placeholder="Ex: Push intense 45min">
     <div class="flex gap-3 mt-4">
@@ -376,7 +361,7 @@ input[type="checkbox"] { accent-color: #22c55e; }
   </div>
 </div>
 
-<div id="csv-modal" class="fixed inset-0 z-50 hidden modal-overlay flex items-center justify-center p-4">
+<div id="csv-modal" class="fixed inset-0 z-50 hidden modal-overlay flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="csv-modal-title" aria-hidden="true">
   <div class="card p-6 w-full max-w-2xl">
     <h3 class="text-lg font-semibold text-white mb-1" id="csv-modal-title">Importer / Exporter CSV</h3>
     <p class="text-xs text-slate-400 mb-4" id="csv-modal-desc">Copiez ce texte ou collez votre propre base CSV.</p>
@@ -388,6 +373,7 @@ input[type="checkbox"] { accent-color: #22c55e; }
   </div>
 </div>
 
+<script src="vendor/lucide.min.js"></script>
 <script>
 // ====== DEFAULT DATABASES ======
 const DEFAULT_CSV = `Nom,Objectif,Difficulté,Équipement,Intensité,Muscles
@@ -489,6 +475,15 @@ let sortMain = { field: null, dir: 'asc' };
 let sortWarmup = { field: null, dir: 'asc' };
 const DURATION_VALUES = [10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60];
 const INTENSITY_COLORS = ['text-emerald-400', 'text-lime-400', 'text-yellow-400', 'text-orange-400', 'text-red-400'];
+const GOALS = ['Push', 'Pull', 'Legs', 'Abdos', 'Cardio', 'Full-body'];
+const DIFFICULTIES = ['Débutant', 'Intermédiaire', 'Avancé'];
+const EQUIPMENTS = ['Aucun', 'Élastique', 'Barre de traction', 'Barre à dips', 'Lest'];
+const WARMUP_TYPES = ['Échauffement', 'Retour au calme'];
+const LEVEL_ORDER = { 'Débutant': 0, 'Intermédiaire': 1, 'Avancé': 2 };
+
+function refreshIcons(root) {
+  if (window.lucide?.createIcons) lucide.createIcons(root ? { scope: root } : undefined);
+}
 
 // ====== NOTIFICATIONS ======
 function notify(msg, type = 'success') {
@@ -497,48 +492,88 @@ function notify(msg, type = 'success') {
   const icons = { success: 'check-circle', error: 'alert-circle', info: 'info' };
   const el = document.createElement('div');
   el.className = `notification card px-4 py-3 flex items-center gap-3 text-sm border-l-4 ${colors[type] || colors.success}`;
-  el.innerHTML = `<i data-lucide="${icons[type]}" class="w-4 h-4 flex-shrink-0 ${type === 'success' ? 'text-accent' : type === 'error' ? 'text-red-400' : 'text-blue-400'}"></i><span>${msg}</span>`;
+  el.innerHTML = `<i data-lucide="${icons[type]}" class="w-4 h-4 flex-shrink-0 ${type === 'success' ? 'text-accent' : type === 'error' ? 'text-red-400' : 'text-blue-400'}"></i><span>${escHtml(msg)}</span>`;
   c.appendChild(el);
-  lucide.createIcons({ scope: el });
+  refreshIcons(el);
   setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity 0.3s'; setTimeout(() => el.remove(), 300); }, 3000);
 }
 
-// ====== CSV PARSING ======
-function parseCSV(text) {
+// ====== CSV PARSING (RFC 4180) ======
+function parseCSV(text, mode = 'exercise') {
   try {
-    const lines = text.split('\n').map(l => l.trim()).filter(l => l);
+    const clean = String(text).replace(/^\uFEFF/, '');
+    const rows = [];
+    let row = [], field = '', quoted = false;
+    for (let i = 0; i < clean.length; i++) {
+      const c = clean[i];
+      if (quoted) {
+        if (c === '"' && clean[i + 1] === '"') { field += '"'; i++; }
+        else if (c === '"') quoted = false;
+        else field += c;
+      } else if (c === '"') quoted = true;
+      else if (c === ',') { row.push(field); field = ''; }
+      else if (c === '\n') { row.push(field); rows.push(row); row = []; field = ''; }
+      else if (c !== '\r') field += c;
+    }
+    if (field !== '' || row.length) { row.push(field); rows.push(row); }
+    const lines = rows.filter(r => r.some(v => v.trim() !== ''));
     if (lines.length < 2) return [];
-    const headers = lines[0].split(',').map(h => h.trim());
-    const required = ['Nom', 'Objectif', 'Difficulté', 'Intensité'];
+    const headers = lines[0].map(h => h.replace(/^\uFEFF/, '').trim());
+    const required = mode === 'warmup' ? ['Nom', 'Type', 'Objectif', 'Difficulté', 'Intensité'] : ['Nom', 'Objectif', 'Difficulté', 'Intensité'];
     const missing = required.filter(r => !headers.includes(r));
     if (missing.length > 0) {
       notify(`Colonnes obligatoires manquantes : ${missing.join(', ')}`, 'error');
       return null;
     }
-    return lines.slice(1).map(line => {
-      const vals = line.split(',').map(v => v.trim());
+    const parsed = [];
+    const errors = [];
+    lines.slice(1).forEach((vals, rowIndex) => {
       const obj = {};
-      headers.forEach((h, i) => obj[h] = vals[i] || '');
-      return obj;
-    }).filter(e => e.Nom);
+      headers.forEach((h, i) => obj[h] = vals[i] ?? '');
+      Object.keys(obj).forEach(k => obj[k] = String(obj[k]).trim());
+      if (!obj.Nom) return;
+      let valid = true;
+      const fail = msg => { errors.push(`Ligne ${rowIndex + 2} : ${msg}`); valid = false; };
+      if (!GOALS.includes(obj.Objectif)) fail(`objectif « ${obj.Objectif || 'vide'} » invalide`);
+      if (!DIFFICULTIES.includes(obj.Difficulté)) fail(`difficulté « ${obj.Difficulté || 'vide'} » invalide`);
+      const intensity = Number(obj.Intensité);
+      if (!Number.isInteger(intensity) || intensity < 1 || intensity > 5) fail(`intensité « ${obj.Intensité || 'vide'} » invalide (1 à 5)`);
+      obj.Intensité = intensity;
+      if (mode === 'exercise') {
+        obj.Équipement = obj.Équipement || 'Aucun';
+        if (!EQUIPMENTS.includes(obj.Équipement)) fail(`équipement « ${obj.Équipement} » invalide`);
+      } else if (!WARMUP_TYPES.includes(obj.Type)) {
+        fail(`type « ${obj.Type || 'vide'} » invalide`);
+      }
+      if (valid) parsed.push(obj);
+    });
+    if (errors.length) {
+      notify(errors.slice(0, 3).join(' · ') + (errors.length > 3 ? ` · +${errors.length - 3} autre(s)` : ''), 'error');
+      return null;
+    }
+    return parsed;
   } catch (e) {
     notify('Erreur de lecture du fichier CSV : ' + e.message, 'error');
     return null;
   }
 }
 
-function toCSV(data, headers) {
-  const h = headers || ['Nom', 'Objectif', 'Difficulté', 'Équipement', 'Intensité', 'Muscles'];
-  const rows = data.map(e => h.map(k => e[k] || '').join(','));
-  return h.join(',') + '\n' + rows.join('\n');
+function csvField(value) {
+  const s = String(value ?? '');
+  return /[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 }
 
-function getDefaultMuscles(objectif, nom) {
+function toCSV(data, headers) {
+  const h = headers || ['Nom', 'Objectif', 'Difficulté', 'Équipement', 'Intensité', 'Muscles'];
+  return h.join(',') + '\n' + data.map(e => h.map(k => csvField(e[k])).join(',')).join('\n');
+}
+
+function getDefaultMuscles(objectif) {
   const byGoal = {
-    'Push': 'Pectoraux, Épaules, Triceps',
-    'Pull': 'Dorsaux, Biceps, Avant-bras',
-    'Legs': 'Cuisses, Fessiers, Mollets',
-    'Abdos': 'Abdominaux, Core',
+    'Push': 'Pectoraux · Épaules · Triceps',
+    'Pull': 'Dorsaux · Biceps · Avant-bras',
+    'Legs': 'Cuisses · Fessiers · Mollets',
+    'Abdos': 'Abdominaux · Core',
     'Cardio': 'Full-body',
     'Full-body': 'Général',
     'Échauffement': 'Général',
@@ -548,15 +583,30 @@ function getDefaultMuscles(objectif, nom) {
 }
 
 function fillDefaultMuscles(arr) {
-  arr.forEach(e => { if (!e.Muscles) e.Muscles = getDefaultMuscles(e.Objectif, e.Nom); });
+  arr.forEach(e => { if (!e.Muscles) e.Muscles = getDefaultMuscles(e.Objectif); });
   return arr;
+}
+
+function normalizeStoredExercises(arr, warmup = false) {
+  if (!Array.isArray(arr)) return [];
+  return arr.filter(e => e && e.Nom).map(e => {
+    const ex = { ...e, Nom: String(e.Nom).trim(), Objectif: String(e.Objectif || '').trim(), Difficulté: String(e.Difficulté || '').trim() };
+    ex.Intensité = Math.min(5, Math.max(1, parseInt(e.Intensité) || 1));
+    if (warmup) ex.Type = e.Type || 'Échauffement';
+    else ex.Équipement = e.Équipement || 'Aucun';
+    return ex;
+  });
 }
 
 // ====== LOCAL STORAGE - MAIN EXERCISES ======
 function loadExercises() {
   const saved = localStorage.getItem('calisthenics_exercises');
-  if (saved) { try { exercises = JSON.parse(saved); } catch (e) { exercises = parseCSV(DEFAULT_CSV); } }
-  else { exercises = parseCSV(DEFAULT_CSV); }
+  if (saved) {
+    try { exercises = normalizeStoredExercises(JSON.parse(saved)); }
+    catch (e) { exercises = parseCSV(DEFAULT_CSV) || []; }
+  } else {
+    exercises = parseCSV(DEFAULT_CSV) || [];
+  }
   fillDefaultMuscles(exercises);
   updateCounts();
   renderTable();
@@ -571,8 +621,12 @@ function saveExercises() {
 // ====== LOCAL STORAGE - WARMUP/COOLDOWN ======
 function loadWarmupExercises() {
   const saved = localStorage.getItem('calisthenics_warmup');
-  if (saved) { try { warmupExercises = JSON.parse(saved); } catch (e) { warmupExercises = parseCSV(DEFAULT_WARMUP_CSV); } }
-  else { warmupExercises = parseCSV(DEFAULT_WARMUP_CSV); }
+  if (saved) {
+    try { warmupExercises = normalizeStoredExercises(JSON.parse(saved), true); }
+    catch (e) { warmupExercises = parseCSV(DEFAULT_WARMUP_CSV, 'warmup') || []; }
+  } else {
+    warmupExercises = parseCSV(DEFAULT_WARMUP_CSV, 'warmup') || [];
+  }
   fillDefaultMuscles(warmupExercises);
   updateCounts();
   renderWarmupTable();
@@ -589,166 +643,135 @@ function updateCounts() {
   document.getElementById('warmup-count').textContent = warmupExercises.length;
 }
 
-// ====== TABLE RENDER - MAIN ======
-function renderTable() {
-  const sorted = sortData(exercises, sortMain);
-  const tbody = document.getElementById('exercise-table-body');
-  tbody.innerHTML = sorted.map((ex, i) => {
-    const dots = Array(5).fill(0).map((_, j) =>
-      `<span class="${j < parseInt(ex.Intensité) ? INTENSITY_COLORS[j] || 'text-accent' : 'text-slate-700'}">●</span>`
-    ).join('');
-    return `<tr class="border-b border-slate-800 hover:bg-slate-800/40 transition">
-      <td class="py-3 px-2 text-white font-medium">${escHtml(ex.Nom)}</td>
-      <td class="py-3 px-2">${escHtml(ex.Objectif)}</td>
-      <td class="py-3 px-2 text-slate-400 text-xs max-w-[160px] truncate" title="${escHtml(ex.Muscles || '')}">${escHtml(ex.Muscles || '')}</td>
-      <td class="py-3 px-2">${escHtml(ex.Difficulté)}</td>
-      <td class="py-3 px-2 text-slate-400">${escHtml(ex.Équipement)}</td>
-      <td class="py-3 px-2 text-sm tracking-wider">${dots}</td>
-      <td class="py-3 px-2 text-right">
-        <button onclick="editExercise(${i})" class="btn-ghost p-1.5 rounded-lg inline-flex"><i data-lucide="pencil" class="w-4 h-4"></i></button>
-        <button onclick="deleteExercise(${i})" class="btn-ghost p-1.5 rounded-lg inline-flex text-red-400 hover:text-red-300"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-      </td>
-    </tr>`;
-  }).join('');
-  lucide.createIcons({ scope: tbody });
+// ====== TABLE RENDER ======
+function intensityDots(value) {
+  const level = Math.min(5, Math.max(0, parseInt(value) || 0));
+  return Array(5).fill(0).map((_, j) =>
+    `<span class="${j < level ? INTENSITY_COLORS[j] || 'text-accent' : 'text-slate-700'}">●</span>`
+  ).join('');
 }
 
-// ====== TABLE RENDER - WARMUP ======
-function renderWarmupTable() {
-  const sorted = sortData(warmupExercises, sortWarmup);
-  const tbody = document.getElementById('warmup-table-body');
-  tbody.innerHTML = sorted.map((ex, i) => {
-    const dots = Array(5).fill(0).map((_, j) =>
-      `<span class="${j < parseInt(ex.Intensité) ? INTENSITY_COLORS[j] || 'text-accent' : 'text-slate-700'}">●</span>`
-    ).join('');
-    const typeColor = ex.Type === 'Échauffement' ? 'text-orange-400' : 'text-blue-400';
+function renderExerciseTable(tbodyId, data, sortState, withType) {
+  const sorted = sortData(data, sortState);
+  const tbody = document.getElementById(tbodyId);
+  const kind = withType ? 'warmup' : 'exercise';
+  tbody.innerHTML = sorted.map(ex => {
+    const i = data.indexOf(ex);
+    const typeCell = withType
+      ? `<td class="py-3 px-2"><span class="${ex.Type === 'Échauffement' ? 'text-orange-400' : 'text-blue-400'}">${escHtml(ex.Type || '')}</span></td>`
+      : '';
     return `<tr class="border-b border-slate-800 hover:bg-slate-800/40 transition">
       <td class="py-3 px-2 text-white font-medium">${escHtml(ex.Nom)}</td>
-      <td class="py-3 px-2"><span class="${typeColor}">${escHtml(ex.Type)}</span></td>
-      <td class="py-3 px-2">${escHtml(ex.Objectif)}</td>
+      ${typeCell}
+      <td class="py-3 px-2">${escHtml(ex.Objectif || '')}</td>
       <td class="py-3 px-2 text-slate-400 text-xs max-w-[160px] truncate" title="${escHtml(ex.Muscles || '')}">${escHtml(ex.Muscles || '')}</td>
-      <td class="py-3 px-2">${escHtml(ex.Difficulté)}</td>
-      <td class="py-3 px-2 text-sm tracking-wider">${dots}</td>
+      <td class="py-3 px-2">${escHtml(ex.Difficulté || '')}</td>
+      ${withType ? '' : `<td class="py-3 px-2 text-slate-400">${escHtml(ex.Équipement || 'Aucun')}</td>`}
+      <td class="py-3 px-2 text-sm tracking-wider">${intensityDots(ex.Intensité)}</td>
       <td class="py-3 px-2 text-right">
-        <button onclick="editWarmupExercise(${i})" class="btn-ghost p-1.5 rounded-lg inline-flex"><i data-lucide="pencil" class="w-4 h-4"></i></button>
-        <button onclick="deleteWarmupExercise(${i})" class="btn-ghost p-1.5 rounded-lg inline-flex text-red-400 hover:text-red-300"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+        <button onclick="openExerciseModal('${kind}', ${i})" class="btn-ghost p-1.5 rounded-lg inline-flex" title="Modifier"><i data-lucide="pencil" class="w-4 h-4"></i></button>
+        <button onclick="deleteExercise('${kind}', ${i})" class="btn-ghost p-1.5 rounded-lg inline-flex text-red-400 hover:text-red-300" title="Supprimer"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
       </td>
     </tr>`;
   }).join('');
-  lucide.createIcons({ scope: tbody });
+  refreshIcons(tbody);
+  tbody.closest('table').querySelectorAll('.sort-btn').forEach(el => {
+    el.classList.remove('sort-asc', 'sort-desc');
+    if (el.dataset.sort === sortState.field) el.classList.add(sortState.dir === 'asc' ? 'sort-asc' : 'sort-desc');
+  });
 }
+
+function renderTable() { renderExerciseTable('exercise-table-body', exercises, sortMain, false); }
+function renderWarmupTable() { renderExerciseTable('warmup-table-body', warmupExercises, sortWarmup, true); }
 
 function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
-// ====== MAIN EXERCISE CRUD ======
-function editExercise(i) {
-  modalMode = 'exercise';
-  editingIndex = i;
-  const ex = exercises[i];
-  document.getElementById('ex-type-group').classList.add('hidden');
-  document.getElementById('ex-name').value = ex.Nom;
-  document.getElementById('ex-goal').value = ex.Objectif;
-  document.getElementById('ex-difficulty').value = ex.Difficulté;
-  document.getElementById('ex-equipment').value = ex.Équipement;
-  document.getElementById('ex-intensity').value = ex.Intensité;
-  document.getElementById('ex-muscles').value = ex.Muscles || '';
-  document.getElementById('modal-title').textContent = 'Modifier l\'exercice';
-  document.getElementById('exercise-modal').classList.remove('hidden');
-}
-
-function deleteExercise(i) {
-  exercises.splice(i, 1);
-  saveExercises();
-  notify('Exercice supprimé', 'info');
-}
-
-function openAddModal() {
-  modalMode = 'exercise';
+// ====== EXERCISE CRUD ======
+function openExerciseModal(kind, i = -1) {
+  modalMode = kind;
   editingIndex = -1;
-  document.getElementById('ex-type-group').classList.add('hidden');
-  document.getElementById('ex-name').value = '';
-  document.getElementById('ex-goal').value = 'Push';
-  document.getElementById('ex-difficulty').value = 'Débutant';
-  document.getElementById('ex-equipment').value = 'Aucun';
-  document.getElementById('ex-intensity').value = '3';
-  document.getElementById('ex-muscles').value = '';
-  document.getElementById('modal-title').textContent = 'Ajouter un exercice';
-  document.getElementById('exercise-modal').classList.remove('hidden');
-}
-
-// ====== WARMUP EXERCISE CRUD ======
-function editWarmupExercise(i) {
-  modalMode = 'warmup';
-  editingWarmupIndex = i;
-  const ex = warmupExercises[i];
-  document.getElementById('ex-type-group').classList.remove('hidden');
-  document.getElementById('ex-type').value = ex.Type || 'Échauffement';
-  document.getElementById('ex-name').value = ex.Nom;
-  document.getElementById('ex-goal').value = ex.Objectif;
-  document.getElementById('ex-difficulty').value = ex.Difficulté;
-  document.getElementById('ex-equipment').value = 'Aucun';
-  document.getElementById('ex-intensity').value = ex.Intensité;
-  document.getElementById('ex-muscles').value = ex.Muscles || '';
-  document.getElementById('modal-title').textContent = 'Modifier l\'exercice';
-  document.getElementById('exercise-modal').classList.remove('hidden');
-}
-
-function deleteWarmupExercise(i) {
-  warmupExercises.splice(i, 1);
-  saveWarmupExercises();
-  notify('Exercice supprimé', 'info');
-}
-
-function openAddWarmupModal() {
-  modalMode = 'warmup';
   editingWarmupIndex = -1;
-  document.getElementById('ex-type-group').classList.remove('hidden');
-  document.getElementById('ex-type').value = 'Échauffement';
-  document.getElementById('ex-name').value = '';
-  document.getElementById('ex-goal').value = 'Push';
-  document.getElementById('ex-difficulty').value = 'Débutant';
-  document.getElementById('ex-equipment').value = 'Aucun';
-  document.getElementById('ex-intensity').value = '1';
-  document.getElementById('ex-muscles').value = '';
-  document.getElementById('modal-title').textContent = 'Ajouter un exercice';
-  document.getElementById('exercise-modal').classList.remove('hidden');
+  const warmup = kind === 'warmup';
+  const list = warmup ? warmupExercises : exercises;
+  const ex = i >= 0 ? list[i] : null;
+  if (warmup) editingWarmupIndex = i; else editingIndex = i;
+  document.getElementById('ex-type-group').classList.toggle('hidden', !warmup);
+  document.getElementById('ex-type').value = ex?.Type || 'Échauffement';
+  document.getElementById('ex-name').value = ex?.Nom || '';
+  document.getElementById('ex-goal').value = ex?.Objectif || 'Push';
+  document.getElementById('ex-difficulty').value = ex?.Difficulté || 'Débutant';
+  document.getElementById('ex-equipment').value = ex?.Équipement || 'Aucun';
+  document.getElementById('ex-intensity').value = ex?.Intensité || (warmup ? '1' : '3');
+  document.getElementById('ex-muscles').value = ex?.Muscles || '';
+  document.getElementById('modal-title').textContent = i >= 0 ? 'Modifier l\'exercice' : 'Ajouter un exercice';
+  showModal('exercise-modal');
+  document.getElementById('ex-name').focus();
+}
+
+function deleteExercise(kind, i) {
+  if (kind === 'warmup') {
+    warmupExercises.splice(i, 1);
+    saveWarmupExercises();
+  } else {
+    exercises.splice(i, 1);
+    saveExercises();
+  }
+  notify('Exercice supprimé', 'info');
 }
 
 // ====== MODALS ======
-document.getElementById('add-exercise-btn').addEventListener('click', openAddModal);
-document.getElementById('add-warmup-btn').addEventListener('click', openAddWarmupModal);
-document.getElementById('modal-cancel').addEventListener('click', () => document.getElementById('exercise-modal').classList.add('hidden'));
+let lastFocused = null;
+function showModal(id) {
+  lastFocused = document.activeElement;
+  const modal = document.getElementById(id);
+  modal.classList.remove('hidden');
+  modal.setAttribute('aria-hidden', 'false');
+  modal.querySelector('input:not([type="hidden"]), textarea, select, button')?.focus();
+}
+function closeModal(id) {
+  const modal = document.getElementById(id);
+  modal.classList.add('hidden');
+  modal.setAttribute('aria-hidden', 'true');
+  if (lastFocused && document.contains(lastFocused)) lastFocused.focus();
+  lastFocused = null;
+}
+function closeOpenModal() {
+  const open = [...document.querySelectorAll('.modal-overlay:not(.hidden)')].pop();
+  if (open) closeModal(open.id);
+}
+
+document.getElementById('add-exercise-btn').addEventListener('click', () => openExerciseModal('exercise'));
+document.getElementById('add-warmup-btn').addEventListener('click', () => openExerciseModal('warmup'));
+document.getElementById('modal-cancel').addEventListener('click', () => closeModal('exercise-modal'));
 document.getElementById('modal-save').addEventListener('click', () => {
   const name = document.getElementById('ex-name').value.trim();
   if (!name) { notify('Le nom est requis', 'error'); return; }
-  const muscles = document.getElementById('ex-muscles').value.trim();
-  if (modalMode === 'exercise') {
-    const ex = {
-      Nom: name,
-      Objectif: document.getElementById('ex-goal').value,
-      Difficulté: document.getElementById('ex-difficulty').value,
-      Équipement: document.getElementById('ex-equipment').value,
-      Intensité: document.getElementById('ex-intensity').value,
-      Muscles: muscles,
-    };
-    if (editingIndex >= 0) exercises[editingIndex] = ex;
-    else exercises.push(ex);
-    saveExercises();
-  } else {
-    const ex = {
-      Nom: name,
-      Type: document.getElementById('ex-type').value,
-      Objectif: document.getElementById('ex-goal').value,
-      Difficulté: document.getElementById('ex-difficulty').value,
-      Intensité: document.getElementById('ex-intensity').value,
-      Muscles: muscles,
-    };
-    if (editingWarmupIndex >= 0) warmupExercises[editingWarmupIndex] = ex;
-    else warmupExercises.push(ex);
-    saveWarmupExercises();
+  const intensity = Number(document.getElementById('ex-intensity').value);
+  if (!Number.isInteger(intensity) || intensity < 1 || intensity > 5) {
+    notify('L\'intensité doit être un entier de 1 à 5', 'error');
+    return;
   }
-  document.getElementById('exercise-modal').classList.add('hidden');
-  notify(editingIndex >= 0 || editingWarmupIndex >= 0 ? 'Exercice modifié' : 'Exercice ajouté');
+  const muscles = document.getElementById('ex-muscles').value.trim();
+  const warmup = modalMode === 'warmup';
+  const editIndex = warmup ? editingWarmupIndex : editingIndex;
+  const list = warmup ? warmupExercises : exercises;
+  const ex = {
+    Nom: name,
+    Objectif: document.getElementById('ex-goal').value,
+    Difficulté: document.getElementById('ex-difficulty').value,
+    Intensité: intensity,
+    Muscles: muscles,
+  };
+  if (warmup) {
+    ex.Type = document.getElementById('ex-type').value;
+  } else {
+    ex.Équipement = document.getElementById('ex-equipment').value;
+  }
+  if (editIndex >= 0) list[editIndex] = ex;
+  else list.push(ex);
+  if (warmup) saveWarmupExercises(); else saveExercises();
+  closeModal('exercise-modal');
+  notify(editIndex >= 0 ? 'Exercice modifié' : 'Exercice ajouté');
 });
 
 document.getElementById('export-csv-btn').addEventListener('click', () => {
@@ -756,35 +779,36 @@ document.getElementById('export-csv-btn').addEventListener('click', () => {
   document.getElementById('csv-modal-title').textContent = 'Exporter la base d\'exercices';
   document.getElementById('csv-modal-desc').textContent = 'Copiez ce texte pour sauvegarder votre base.';
   document.getElementById('csv-text').value = toCSV(exercises, ['Nom', 'Objectif', 'Difficulté', 'Équipement', 'Intensité', 'Muscles']);
-  document.getElementById('csv-modal').classList.remove('hidden');
+  showModal('csv-modal');
 });
 document.getElementById('import-csv-btn').addEventListener('click', () => {
   csvMode = 'exercise';
   document.getElementById('csv-modal-title').textContent = 'Importer une base d\'exercices';
   document.getElementById('csv-modal-desc').textContent = 'Collez votre CSV pour remplacer la base actuelle.';
   document.getElementById('csv-text').value = '';
-  document.getElementById('csv-modal').classList.remove('hidden');
+  showModal('csv-modal');
 });
 document.getElementById('export-warmup-btn').addEventListener('click', () => {
   csvMode = 'warmup';
   document.getElementById('csv-modal-title').textContent = 'Exporter la base d\'échauffement';
   document.getElementById('csv-modal-desc').textContent = 'Copiez ce texte pour sauvegarder votre base.';
   document.getElementById('csv-text').value = toCSV(warmupExercises, ['Nom', 'Type', 'Objectif', 'Difficulté', 'Intensité', 'Muscles']);
-  document.getElementById('csv-modal').classList.remove('hidden');
+  showModal('csv-modal');
 });
 document.getElementById('import-warmup-btn').addEventListener('click', () => {
   csvMode = 'warmup';
   document.getElementById('csv-modal-title').textContent = 'Importer une base d\'échauffement';
   document.getElementById('csv-modal-desc').textContent = 'Collez votre CSV pour remplacer la base actuelle.';
   document.getElementById('csv-text').value = '';
-  document.getElementById('csv-modal').classList.remove('hidden');
+  showModal('csv-modal');
 });
-document.getElementById('csv-cancel').addEventListener('click', () => document.getElementById('csv-modal').classList.add('hidden'));
+document.getElementById('csv-cancel').addEventListener('click', () => closeModal('csv-modal'));
 document.getElementById('csv-apply').addEventListener('click', () => {
   const text = document.getElementById('csv-text').value.trim();
   if (!text) { notify('Collez d\'abord du texte CSV', 'error'); return; }
-  const parsed = parseCSV(text);
-  if (!parsed || parsed.length === 0) { notify((parsed === null) ? 'Import annulé' : 'Format CSV invalide', 'error'); return; }
+  const parsed = parseCSV(text, csvMode);
+  if (parsed === null) return;
+  if (parsed.length === 0) { notify('Format CSV invalide', 'error'); return; }
   if (csvMode === 'exercise') {
     exercises = parsed;
     saveExercises();
@@ -792,7 +816,7 @@ document.getElementById('csv-apply').addEventListener('click', () => {
     warmupExercises = parsed;
     saveWarmupExercises();
   }
-  document.getElementById('csv-modal').classList.add('hidden');
+  closeModal('csv-modal');
   notify(`${parsed.length} exercices importés`);
 });
 
@@ -822,12 +846,9 @@ document.addEventListener('click', (e) => {
   const field = th.dataset.sort;
   const table = th.closest('#subtab-exercises, #subtab-warmup');
   if (!table) return;
-  if (table.id === 'subtab-exercises') { toggleSort(sortMain, field); renderTable(); }
-  else { toggleSort(sortWarmup, field); renderWarmupTable(); }
-  document.querySelectorAll(`#${table.id} .sort-btn`).forEach(el => {
-    el.classList.remove('sort-asc', 'sort-desc');
-    if (el.dataset.sort === field) el.classList.add(sortMain.field === field ? (sortMain.dir === 'asc' ? 'sort-asc' : 'sort-desc') : sortWarmup.field === field ? (sortWarmup.dir === 'asc' ? 'sort-asc' : 'sort-desc') : null);
-  });
+  const state = table.id === 'subtab-exercises' ? sortMain : sortWarmup;
+  toggleSort(state, field);
+  if (table.id === 'subtab-exercises') renderTable(); else renderWarmupTable();
 });
 
 // ====== GOAL CHECKBOX LOGIC ======
@@ -845,7 +866,7 @@ document.getElementById('goal-group').addEventListener('change', (e) => {
 
 function getSelectedGoals() {
   const checked = Array.from(document.querySelectorAll('#goal-group .goal-cb:checked')).map(cb => cb.value);
-  if (checked.includes('Full-body') || checked.length === 0) return ['Push', 'Pull', 'Legs', 'Abdos'];
+  if (checked.includes('Full-body') || checked.length === 0) return ['Push', 'Pull', 'Legs', 'Abdos', 'Cardio'];
   return checked;
 }
 
@@ -941,11 +962,12 @@ function getWarmupForGoal(goals, duration) {
   const vol = getWarmupVolume(duration);
   let pool = warmupExercises.filter(e => (e.Type === 'Échauffement' || !e.Type) && (goals.includes(e.Objectif) || e.Objectif === 'Full-body'));
   if (pool.length === 0) pool = [{ Nom: 'Rotations articulaires', Objectif: 'Full-body', Difficulté: 'Débutant', Intensité: '1', Type: 'Échauffement', Muscles: 'Général' }];
-  const needsPrehab = goals.includes('Push') || goals.includes('Pull') || goals.includes('Full-body');
+  const needsPrehab = goals.includes('Push') || goals.includes('Pull');
   let selected = [];
   if (needsPrehab) {
-    const wrist = warmupExercises.find(e => /poignet/i.test(e.Nom));
-    const shoulder = warmupExercises.find(e => /épaule|epaule|scapulaire|cercle.*bras|rotation.*épaule/i.test(e.Nom));
+    const isWarmup = e => e.Type === 'Échauffement' || !e.Type;
+    const wrist = warmupExercises.find(e => isWarmup(e) && /poignet/i.test(e.Nom));
+    const shoulder = warmupExercises.find(e => isWarmup(e) && /épaule|epaule|scapulaire|cercle.*bras|rotation.*épaule/i.test(e.Nom));
     if (wrist && !selected.find(s=>s.Nom===wrist.Nom)) selected.push(wrist);
     if (shoulder && !selected.find(s=>s.Nom===shoulder.Nom)) selected.push(shoulder);
     // compléter sans doublon
@@ -966,8 +988,8 @@ function getCooldownForGoal(goals, duration) {
   let pool = warmupExercises.filter(e => e.Type === 'Retour au calme' && (goals.includes(e.Objectif) || e.Objectif === 'Full-body'));
   if (pool.length === 0) pool = [{ Nom: 'Étirements généraux', Objectif: 'Full-body', Difficulté: 'Débutant', Intensité: '1', Type: 'Retour au calme', Muscles: 'Général' }];
   const needsDecomp = goals.includes('Pull');
-  // cherche une suspension / dead hang / étirement dorsaux dans toute la base warmup
-  const decomp = warmupExercises.find(e => e.Type==='Retour au calme' && /suspension|dead hang|grand dorsal|dorsaux/i.test(e.Nom)) || warmupExercises.find(e=> e.Type==='Retour au calme');
+  // cherche une suspension / dead hang compatible avec l'objectif
+  const decomp = pool.find(e => /suspension|dead hang|grand dorsal|dorsaux/i.test(e.Nom));
   let selected = pickRandom(pool, vol);
   if (needsDecomp && decomp && !selected.find(s=>s.Nom===decomp.Nom)) {
     selected[0] = decomp; // remplace le premier pour garantir la décompression
@@ -1051,7 +1073,7 @@ function buildEmomBlocks(ordered, duration, levelIdx) {
 function buildAmrapBlocks(ordered, duration, levelIdx) {
   // Time Cap 12/15/20 selon durée, 3-4 ex circuit reps fixes
   const timeCap = duration <= 20 ? 12 : duration <= 40 ? 15 : 20;
-  const circuitSize = Math.min(4, Math.max(3, ordered.length));
+  const circuitSize = Math.min(4, ordered.length);
   const circuit = ordered.slice(0, circuitSize);
   const repMap = { Push: levelIdx===0?8:10, Pull: 5, Legs: 15, Abdos: 15, Cardio: 10, 'Full-body': 8 };
   const exercises = circuit.map(ex => ({
@@ -1079,7 +1101,7 @@ function buildHiitBlocks(ordered, levelIdx) {
 }
 
 // ====== DRAFT ÉQUILIBRÉ — round-robin + skill + tri intensité ======
-function buildBalancedDraft(pool, count, goals, levelIdx) {
+function buildBalancedDraft(pool, count, goals) {
   // pool déjà filtré par niveau/équipement ; on répartit par Objectif
   const byGoal = {};
   goals.forEach(g => byGoal[g] = shuffleArray(pool.filter(e => e.Objectif === g)));
@@ -1090,7 +1112,7 @@ function buildBalancedDraft(pool, count, goals, levelIdx) {
     selected = pickRandom(byGoal[uniqueGoals[0]] || pool, count);
   } else {
     // Round-robin : alterne les catégories (Full-body = Push/Pull/Legs/Abdos en boucle)
-    const order = ['Push','Pull','Legs','Abdos','Cardio'];
+    const order = ['Push','Pull','Legs','Cardio','Abdos'];
     // on respecte l'ordre demandé mais en rotatif
     const cycle = order.filter(o => goals.includes(o));
     const buckets = cycle.length ? cycle : uniqueGoals;
@@ -1110,8 +1132,6 @@ function buildBalancedDraft(pool, count, goals, levelIdx) {
       selected = selected.concat(pickRandom(remaining, count - selected.length));
     }
   }
-  // Tri neuronal : intensité décroissante (plus dur d'abord) — surcharge progressive
-  selected.sort((a,b) => parseInt(b.Intensité) - parseInt(a.Intensité));
   // Séparation Skill vs Strength : skills en tête (SNC frais, pas d'échec)
   const skills = selected.filter(isSkillOrHold);
   const strength = selected.filter(e => !isSkillOrHold(e));
@@ -1121,14 +1141,49 @@ function buildBalancedDraft(pool, count, goals, levelIdx) {
   return [...skills, ...strength];
 }
 
+function parseRepsAverage(reps) {
+  const m = String(reps ?? '').match(/(\d+)(?:\s*-\s*(\d+))?/);
+  if (!m) return 10;
+  return m[2] ? (parseInt(m[1]) + parseInt(m[2])) / 2 : parseInt(m[1]);
+}
+
+function parseSeconds(value) {
+  const m = String(value ?? '').match(/(\d+)/);
+  return m ? parseInt(m[1]) : 0;
+}
+
+function estimateWorkoutMinutes(workout) {
+  let mainMinutes = 0;
+  (workout.blocks || []).forEach(block => {
+    if (block.emomDuration) { mainMinutes += block.emomDuration; return; }
+    if (block.timeCap) { mainMinutes += block.timeCap; return; }
+    (block.exercises || []).forEach(item => {
+      if (workout.format === 'hiit') {
+        mainMinutes += (parseSeconds(item.reps) + parseSeconds(item.rest)) / 60;
+      } else {
+        const sets = Number(item.sets) || 1;
+        const workSeconds = /s\b/i.test(String(item.reps)) && !/rep/i.test(String(item.reps))
+          ? parseSeconds(item.reps)
+          : parseRepsAverage(item.reps) * 3;
+        mainMinutes += sets * (workSeconds + parseSeconds(item.rest)) / 60;
+      }
+    });
+  });
+  const transitions = (workout.warmup.length + workout.cooldown.length) * 0.75;
+  return Math.max(1, Math.round(mainMinutes + transitions));
+}
+
 function renderSessionSummary(workout) {
   const totalEx = workout.warmup.length + workout.main.length + workout.cooldown.length;
+  const actualDuration = estimateWorkoutMinutes(workout);
   const formatLabels = { classic: 'Classique', hiit: 'HIIT / Circuit', amrap: 'AMRAP', emom: 'EMOM' };
   const formatIcons = { classic: 'list', hiit: 'flame', amrap: 'trophy', emom: 'clock' };
   const formatColors = { classic: 'bg-accent/10 text-accent', hiit: 'bg-orange-400/10 text-orange-400', amrap: 'bg-yellow-400/10 text-yellow-400', emom: 'bg-blue-400/10 text-blue-400' };
   const el = document.getElementById('session-summary');
-  // résumé enrichi : time cap / emom duration si présent
   const extraInfo = workout.blocks?.[0]?.timeCap ? ` · Cap ${workout.blocks[0].timeCap}′` : workout.blocks?.[0]?.emomDuration ? ` · EMOM ${workout.blocks[0].emomDuration}′` : '';
+  const avgIntensity = workout.main.length
+    ? Math.min(5, Math.max(1, Math.round(workout.main.reduce((sum, e) => sum + (parseInt(e.Intensité) || 3), 0) / workout.main.length)))
+    : 3;
   el.innerHTML = `
     <div class="card p-5 border-l-4 border-accent">
       <div class="flex items-center justify-between flex-wrap gap-2 mb-4">
@@ -1153,21 +1208,20 @@ function renderSessionSummary(workout) {
           <div class="text-[11px] text-slate-400 mt-0.5">Échauf. · Principaux · Retour</div>
         </div>
         <div class="bg-slate-800/30 rounded-lg py-3 px-2">
-          <div class="text-sm font-bold text-white flex items-center justify-center gap-1">
-            ${workout.blocks ? workout.blocks.length + ' bloc(s)' : workout.main.length + ' ex'}<span class="text-slate-500 text-xs">${extraInfo}</span>
-          </div>
-          <div class="text-[11px] text-slate-400 mt-0.5">~${workout.duration} minutes</div>
+          <div class="text-lg font-bold text-white">${actualDuration} min</div>
+          <div class="text-[11px] text-slate-400 mt-0.5">Estimé · cible ${workout.duration} min</div>
+          <div class="text-[10px] text-slate-500">${workout.blocks ? workout.blocks.length + ' bloc(s)' : workout.main.length + ' ex'}${extraInfo}</div>
         </div>
         <div class="bg-slate-800/30 rounded-lg py-3 px-2">
           <div class="text-lg font-bold text-accent flex items-center justify-center gap-1">
-            ${Array.from({ length: Math.round(workout.main.reduce((s,e)=>s+parseInt(e.Intensité),0)/workout.main.length) || 3 }, () => '●').join('')}
+            ${'●'.repeat(avgIntensity)}
           </div>
           <div class="text-[11px] text-slate-400 mt-0.5">Intensité moyenne</div>
         </div>
       </div>
       ${workout.blocks ? `<div class="mt-3 text-[11px] text-slate-500 flex flex-wrap gap-2">${workout.blocks.map(b=>`<span class="bg-slate-800/50 px-2 py-1 rounded-full">${escHtml(b.title)}</span>`).join('')}</div>` : ''}
     </div>`;
-  lucide.createIcons({ scope: el });
+  refreshIcons(el);
 }
 
 // ====== WORKOUT GENERATION — algorithme coach ======
@@ -1178,14 +1232,15 @@ function generateWorkout() {
   const levelIdx = LEVEL_NAMES.indexOf(levelStr);
   const goalGoals = getSelectedGoals();
   const format = document.querySelector('input[name="format"]:checked')?.value || 'classic';
-  const levelOrder = { 'Débutant': 0, 'Intermédiaire': 1, 'Avancé': 2 };
-  const userLevel = levelOrder[levelStr];
+  const userLevel = LEVEL_ORDER[levelStr];
 
   // Étape 1 : Filtrage pool (Niveau + Équipement + Objectifs)
   let pool = exercises.filter(ex => {
     if (!goalGoals.includes(ex.Objectif)) return false;
-    if (levelOrder[ex.Difficulté] > userLevel) return false;
-    if (ex.Équipement !== 'Aucun' && !equipment.includes(ex.Équipement)) return false;
+    const level = LEVEL_ORDER[ex.Difficulté];
+    if (level === undefined || level > userLevel) return false;
+    const eq = ex.Équipement || 'Aucun';
+    if (eq !== 'Aucun' && !equipment.includes(eq)) return false;
     return true;
   });
 
@@ -1196,7 +1251,7 @@ function generateWorkout() {
 
   // Étape 2 : Draft équilibré round-robin + tri neuronal + bloc Skill
   const count = getExerciseCount(duration);
-  const ordered = buildBalancedDraft(pool, Math.min(count, pool.length), goalGoals, levelIdx);
+  const ordered = buildBalancedDraft(pool, Math.min(count, pool.length), goalGoals);
 
   // Étape 3 : Application des Formats — génération des consignes sets/reps/repos
   let blocks;
@@ -1206,17 +1261,20 @@ function generateWorkout() {
   else if (format === 'hiit') blocks = buildHiitBlocks(ordered, levelIdx);
   else blocks = buildClassicBlocks(ordered, levelIdx);
 
-  // Aplatit pour compatibilité (favorites, export simple, reroll)
-  const main = ordered;
+  // AMRAP n'utilise que le circuit affiché ; les autres formats gardent tout le draft.
+  const main = format === 'amrap' ? blocks[0].exercises.map(item => item.ex) : ordered;
 
   // Étape 4 : Échauffement préhab + retour calme décompression (dépend du contenu final)
   const warmup = getWarmupForGoal(goalGoals, duration);
   const cooldown = getCooldownForGoal(goalGoals, duration);
 
-  return { warmup, main, cooldown, blocks, format, goal: goalGoals, duration, level: levelStr, levelIdx };
+  return { warmup, main, cooldown, blocks, format, goal: goalGoals, equipment, duration, level: levelStr, levelIdx };
 }
 
 function renderWorkout(workout) {
+  if (workout.format === 'amrap' && workout.blocks?.[0]) {
+    workout.main = workout.blocks[0].exercises.map(item => item.ex);
+  }
   currentWorkout = workout;
   document.getElementById('results').classList.remove('hidden');
   document.getElementById('results').classList.add('fade-in');
@@ -1249,7 +1307,7 @@ function renderWorkout(workout) {
           <span class="text-[11px] bg-slate-800 text-slate-400 px-2 py-1 rounded-full">${escHtml(block.subtitle || '')}</span>
         </div>
         ${isSkillBlock ? '<p class="text-[11px] text-violet-300 mb-3">🧠 SNC frais — qualité > quantité, stop avant échec.</p>' : ''}
-        <div class="space-y-3">${block.exercises.map((item, ei) => renderBlockExercise(item, bi, ei)).join('')}</div>
+        <div class="space-y-3">${block.exercises.map((item, ei) => renderBlockExercise(item, ei)).join('')}</div>
         ${block.restBetween && block.restBetween !== '—' ? `<p class="text-[11px] text-slate-500 mt-3">Repos inter-bloc : <span class="text-slate-300 font-medium">${escHtml(block.restBetween)}</span></p>` : ''}
         ${block.timeCap ? `<p class="text-[11px] text-yellow-400 mt-2">⏱ Time Cap : ${block.timeCap} min — max de tours !</p>` : ''}
         ${block.emomDuration ? `<p class="text-[11px] text-blue-400 mt-2">⏱ EMOM ${block.emomDuration}′ — alterne chaque minute, ~30-40s de repos restant.</p>` : ''}
@@ -1273,7 +1331,7 @@ function renderWorkout(workout) {
       <h3 class="text-sm font-semibold text-slate-200 uppercase tracking-wider flex items-center gap-2">
         <i data-lucide="zap" class="w-4 h-4 text-accent"></i> Corps de séance — ${workout.blocks.length} bloc(s)
       </h3>
-      <span class="text-xs bg-accent/10 text-accent px-2.5 py-1 rounded-full font-medium">${formatLabel} · ${workout.level}</span>
+      <span class="text-xs bg-accent/10 text-accent px-2.5 py-1 rounded-full font-medium">${formatLabel} · ${escHtml(workout.level || '')}</span>
     </div>
     <div class="space-y-4">${blocksHtml}</div>` : blocksHtml;
 
@@ -1286,20 +1344,18 @@ function renderWorkout(workout) {
       <div class="space-y-2">${workout.cooldown.map(ex => renderExerciseMini(ex, getCooldownInstruction(ex))).join('')}</div>
     </div>`;
 
-  lucide.createIcons({ scope: warmupDiv });
-  lucide.createIcons({ scope: mainDiv });
-  lucide.createIcons({ scope: coolDiv });
+  refreshIcons(warmupDiv);
+  refreshIcons(mainDiv);
+  refreshIcons(coolDiv);
 
   renderExport(workout);
   document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
   notify('Séance générée !');
 }
 
-function renderBlockExercise(item, blockIdx, exIdx) {
+function renderBlockExercise(item, exIdx) {
   const { ex, sets, reps, rest, cue } = item;
-  const dots = Array(5).fill(0).map((_, j) =>
-    `<span class="${j < parseInt(ex.Intensité) ? INTENSITY_COLORS[j] || 'text-accent' : 'text-slate-700'}">●</span>`
-  ).join('');
+  const dots = intensityDots(ex.Intensité);
   const skillBadge = item.isSkill ? '<span class="text-[10px] bg-violet-500/20 text-violet-300 px-2 py-0.5 rounded-full font-medium">SKILL</span>' : '';
   const repsDisplay = sets === 'AMRAP' ? reps : `${sets} × ${reps}`;
   return `<div class="flex gap-3 p-3 rounded-xl bg-slate-800/40 border border-slate-700/30 ${item.isSkill?'ring-1 ring-violet-400/30':''}">
@@ -1339,7 +1395,7 @@ function renderExerciseMini(ex, instruction) {
   const muscles = ex.Muscles ? `<span class="text-[10px] text-slate-500 ml-2">${escHtml(ex.Muscles)}</span>` : '';
   const instrHtml = instruction
     ? `<span class="text-xs text-accent font-medium ml-auto">${instruction}</span>`
-    : `<span class="text-xs text-slate-500 ml-auto">${ex.Difficulté || ''} · ${ex.Intensité || ''}/5</span>`;
+    : `<span class="text-xs text-slate-500 ml-auto">${escHtml(ex.Difficulté || '')} · ${escHtml(ex.Intensité || '')}/5</span>`;
   return `<div class="flex items-center gap-3 py-2 px-3 bg-slate-800/30 rounded-lg">
     <i data-lucide="activity" class="w-4 h-4 text-slate-400 flex-shrink-0"></i>
     <span class="text-sm font-medium text-slate-200">${escHtml(ex.Nom)}</span>${muscles}
@@ -1348,9 +1404,7 @@ function renderExerciseMini(ex, instruction) {
 }
 
 function renderExerciseCard(ex, index) {
-  const dots = Array(5).fill(0).map((_, j) =>
-    `<span class="${j < parseInt(ex.Intensité) ? INTENSITY_COLORS[j] || 'text-accent' : 'text-slate-700'}">●</span>`
-  ).join('');
+  const dots = intensityDots(ex.Intensité);
   const cue = getTechnicalCue(ex);
   const skillBadge = isSkillOrHold(ex) ? '<span class="text-[10px] bg-violet-500/20 text-violet-300 px-1.5 py-0.5 rounded-full">SKILL</span>' : '';
   const musclesLabel = ex.Muscles ? `<span class="text-[11px] text-slate-500">${escHtml(ex.Muscles)}</span>` : '';
@@ -1379,40 +1433,37 @@ function renderExerciseCard(ex, index) {
 
 function rerollExercise(index) {
   if (!currentWorkout) return;
-  const equipment = Array.from(document.querySelectorAll('#equipment-group input:checked')).map(cb => cb.value);
-  const levelStr = LEVEL_NAMES[parseInt(document.getElementById('level').value)] || 'Intermédiaire';
-  const levelIdx = LEVEL_NAMES.indexOf(levelStr);
-  const goalGoals = getSelectedGoals();
-  const levelOrder = { 'Débutant': 0, 'Intermédiaire': 1, 'Avancé': 2 };
-  const userLevel = levelOrder[levelStr];
+  const equipment = currentWorkout.equipment || Array.from(document.querySelectorAll('#equipment-group input:checked')).map(cb => cb.value);
+  const levelIdx = Number.isInteger(currentWorkout.levelIdx)
+    ? currentWorkout.levelIdx
+    : (LEVEL_NAMES[parseInt(document.getElementById('level').value)] ? parseInt(document.getElementById('level').value) : 1);
+  const goalGoals = currentWorkout.goal || getSelectedGoals();
+  const userLevel = levelIdx;
   const currentEx = currentWorkout.main[index];
+  if (!currentEx) return;
 
-  let pool = exercises.filter(ex => {
-    if (ex.Nom === currentEx.Nom) return false;
+  const usedNames = currentWorkout.main.map(e => e.Nom);
+  const matchesFilters = ex => {
+    if (ex.Nom === currentEx.Nom || usedNames.includes(ex.Nom)) return false;
     if (!goalGoals.includes(ex.Objectif)) return false;
-    if (levelOrder[ex.Difficulté] > userLevel) return false;
-    if (ex.Équipement !== 'Aucun' && !equipment.includes(ex.Équipement)) return false;
-    const usedNames = currentWorkout.main.map(e => e.Nom);
-    if (usedNames.includes(ex.Nom)) return false;
+    const level = LEVEL_ORDER[ex.Difficulté];
+    if (level === undefined || level > userLevel) return false;
+    const eq = ex.Équipement || 'Aucun';
+    if (eq !== 'Aucun' && !equipment.includes(eq)) return false;
+    return true;
+  };
+  let pool = exercises.filter(ex => {
+    if (!matchesFilters(ex)) return false;
     // Préserve l'équilibre : évite de piocher même Objectif que voisin si HIIT
-    if (currentWorkout.format === 'hiit' && usedNames.length) {
-      const prev = currentWorkout.main[index-1];
-      const next = currentWorkout.main[index+1];
+    if (currentWorkout.format === 'hiit') {
+      const prev = currentWorkout.main[index - 1];
+      const next = currentWorkout.main[index + 1];
       if ((prev && ex.Objectif === prev.Objectif) || (next && ex.Objectif === next.Objectif)) return false;
     }
     return true;
   });
   // fallback sans contrainte HIIT si pool vide
-  if (pool.length === 0 && currentWorkout.format === 'hiit') {
-    pool = exercises.filter(ex => {
-      if (ex.Nom === currentEx.Nom) return false;
-      if (!goalGoals.includes(ex.Objectif)) return false;
-      if (levelOrder[ex.Difficulté] > userLevel) return false;
-      if (ex.Équipement !== 'Aucun' && !equipment.includes(ex.Équipement)) return false;
-      if (currentWorkout.main.map(e=>e.Nom).includes(ex.Nom)) return false;
-      return true;
-    });
-  }
+  if (pool.length === 0 && currentWorkout.format === 'hiit') pool = exercises.filter(matchesFilters);
 
   if (pool.length === 0) { notify('Aucun exercice alternatif disponible', 'error'); return; }
 
@@ -1420,12 +1471,8 @@ function rerollExercise(index) {
   currentWorkout.main[index] = replacement;
   // Reconstruit les blocs pour garder la cohérence format / skill / superset
   const ordered = [...currentWorkout.main];
-  // Retri intensité + skill en tête pour respecter la règle SNC
-  ordered.sort((a,b)=> parseInt(b.Intensité)-parseInt(a.Intensité));
-  const skills = ordered.filter(isSkillOrHold);
-  const strength = ordered.filter(e=> !isSkillOrHold(e));
-  skills.sort((a,b)=> parseInt(b.Intensité)-parseInt(a.Intensité));
-  strength.sort((a,b)=> parseInt(b.Intensité)-parseInt(a.Intensité));
+  const skills = ordered.filter(isSkillOrHold).sort((a,b)=> parseInt(b.Intensité)-parseInt(a.Intensité));
+  const strength = ordered.filter(e=> !isSkillOrHold(e)).sort((a,b)=> parseInt(b.Intensité)-parseInt(a.Intensité));
   const reordered = [...skills, ...strength];
   currentWorkout.main = reordered;
   // Recalcule les blocks selon le format
@@ -1466,21 +1513,21 @@ function renderFavorites() {
       <div class="w-8 h-8 rounded-lg bg-yellow-400/10 flex items-center justify-center flex-shrink-0"><i data-lucide="star" class="w-4 h-4 text-yellow-400"></i></div>
       <div class="flex-1 min-w-0">
         <div class="text-sm font-medium text-white truncate">${escHtml(f.name)}</div>
-        <div class="text-xs text-slate-400">${f.workout.main.length} ex · ${f.workout.duration} min · ${f.workout.format} · ${new Date(f.createdAt).toLocaleDateString('fr-FR')}</div>
+        <div class="text-xs text-slate-400">${f.workout.main.length} ex · ≈${f.workout.blocks?.length ? estimateWorkoutMinutes(f.workout) : f.workout.duration} min · ${escHtml(f.workout.format)} · ${new Date(f.createdAt).toLocaleDateString('fr-FR')}</div>
       </div>
       <button onclick="loadFavorite('${f.id}')" class="btn-primary text-xs px-3 py-1.5 rounded-lg flex items-center gap-1" title="Charger"><i data-lucide="play" class="w-3 h-3"></i> Charger</button>
       <button onclick="deleteFavorite('${f.id}')" class="btn-ghost p-1.5 rounded-lg text-red-400" title="Supprimer"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
     </div>`).join('');
-  lucide.createIcons({ scope: list });
+  refreshIcons(list);
 }
 function openFavoriteModal() {
   if (!currentWorkout) { notify('Génère d\'abord une séance', 'error'); return; }
   document.getElementById('favorite-name').value = `${currentWorkout.goal.join('/')} · ${currentWorkout.duration}min · ${currentWorkout.format}`;
-  document.getElementById('favorite-modal').classList.remove('hidden');
+  showModal('favorite-modal');
   document.getElementById('favorite-name').focus();
   document.getElementById('favorite-name').select();
 }
-function closeFavoriteModal() { document.getElementById('favorite-modal').classList.add('hidden'); }
+function closeFavoriteModal() { closeModal('favorite-modal'); }
 function confirmFavorite() {
   const name = document.getElementById('favorite-name').value.trim();
   if (!name) { notify('Donne un nom à ta séance', 'error'); return; }
@@ -1520,7 +1567,7 @@ function renderExport(workout) {
     <button onclick="exportCSV()" class="btn-secondary flex-1 py-3 rounded-xl text-sm flex items-center justify-center gap-2">
       <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> CSV
     </button>`;
-  lucide.createIcons({ scope: exportDiv });
+  refreshIcons(exportDiv);
 }
 
 function exportPDF() { window.print(); }
@@ -1528,24 +1575,24 @@ function exportPDF() { window.print(); }
 function exportCSV() {
   if (!currentWorkout) return;
   // Export enrichi : Blocs + Sets/Reps/Repos/Cues — rétrocompatible (anciennes colonnes conservées)
-  const header = 'Bloc,Type,Nom,Objectif,Difficulté,Intensité,Muscles,Séries,Reps/Reps,Repos,Cue';
+  const header = 'Bloc,Type,Nom,Objectif,Difficulté,Intensité,Muscles,Séries,Répétitions,Repos,Cue';
   const lines = [header];
-  const esc = v => `"${String(v||'').replace(/"/g,'""')}"`;
-  currentWorkout.warmup.forEach(ex => lines.push(['—','Échauffement',ex.Nom,ex.Objectif,ex.Difficulté||'',ex.Intensité||'',ex.Muscles||'','',getWarmupInstruction(ex),'',''].map(esc).join(',')));
+  const row = values => values.map(csvField).join(',');
+  currentWorkout.warmup.forEach(ex => lines.push(row(['—','Échauffement',ex.Nom,ex.Objectif,ex.Difficulté||'',ex.Intensité||'',ex.Muscles||'','',getWarmupInstruction(ex),'',''])));
   if (currentWorkout.blocks && currentWorkout.blocks.length) {
     currentWorkout.blocks.forEach(b => {
       b.exercises.forEach(item => {
         const sets = item.sets ?? '';
         const reps = item.reps ?? '';
         const rest = item.rest ?? '';
-        lines.push([b.title,'Principal',item.ex.Nom,item.ex.Objectif,item.ex.Difficulté||'',item.ex.Intensité||'',item.ex.Muscles||'',sets,reps,rest,item.cue||''].map(esc).join(','));
+        lines.push(row([b.title,'Principal',item.ex.Nom,item.ex.Objectif,item.ex.Difficulté||'',item.ex.Intensité||'',item.ex.Muscles||'',sets,reps,rest,item.cue||'']));
       });
     });
   } else {
-    currentWorkout.main.forEach(ex => lines.push(['—','Principal',ex.Nom,ex.Objectif,ex.Difficulté||'',ex.Intensité||'',ex.Muscles||'','','','',''].map(esc).join(',')));
+    currentWorkout.main.forEach(ex => lines.push(row(['—','Principal',ex.Nom,ex.Objectif,ex.Difficulté||'',ex.Intensité||'',ex.Muscles||'','','','',''])));
   }
-  currentWorkout.cooldown.forEach(ex => lines.push(['—','Retour au calme',ex.Nom,ex.Objectif,ex.Difficulté||'',ex.Intensité||'',ex.Muscles||'','',getCooldownInstruction(ex),'',''].map(esc).join(',')));
-  const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+  currentWorkout.cooldown.forEach(ex => lines.push(row(['—','Retour au calme',ex.Nom,ex.Objectif,ex.Difficulté||'',ex.Intensité||'',ex.Muscles||'','',getCooldownInstruction(ex),'',''])));
+  const blob = new Blob(['\uFEFF' + lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = `seance-calisthenics-${new Date().toISOString().slice(0,10)}.csv`;
@@ -1553,8 +1600,6 @@ function exportCSV() {
   URL.revokeObjectURL(a.href);
   notify('Fichier CSV téléchargé');
 }
-// Alias rétrocompatibilité : ancien nom downloadCSV
-const downloadCSV = exportCSV;
 
 // ====== TAB SYSTEM ======
 document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -1572,17 +1617,20 @@ document.getElementById('generate-btn').addEventListener('click', () => {
   if (workout) renderWorkout(workout);
 });
 
-// ====== FAVORITE MODAL HANDLERS ======
+// ====== MODAL HANDLERS ======
 document.getElementById('favorite-cancel').addEventListener('click', closeFavoriteModal);
 document.getElementById('favorite-confirm').addEventListener('click', confirmFavorite);
-document.getElementById('favorite-modal').addEventListener('click', (e) => { if (e.target.id === 'favorite-modal') closeFavoriteModal(); });
-document.getElementById('favorite-name').addEventListener('keydown', (e) => { if (e.key === 'Enter') confirmFavorite(); if (e.key === 'Escape') closeFavoriteModal(); });
+document.getElementById('favorite-name').addEventListener('keydown', (e) => { if (e.key === 'Enter') confirmFavorite(); });
+document.querySelectorAll('.modal-overlay').forEach(modal => {
+  modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(modal.id); });
+});
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeOpenModal(); });
 
 // ====== INIT ======
 loadExercises();
 loadWarmupExercises();
 loadFavorites();
-lucide.createIcons();
+refreshIcons();
 document.querySelector('.format-card[data-format="classic"]')?.classList.add('selected');
 </script>
 </body>
