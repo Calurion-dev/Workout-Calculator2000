@@ -37,6 +37,22 @@ input[type="checkbox"] { accent-color: #22c55e; }
 .sort-btn:hover { color: #22c55e; }
 .sort-asc::after { content: ' ▲'; font-size: 0.6rem; }
 .sort-desc::after { content: ' ▼'; font-size: 0.6rem; }
+.week-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0.55rem; }
+.week-day { display: flex; flex-direction: column; min-height: 200px; padding: 0.6rem; background: #0f172a; border: 1px solid #263548; border-radius: 0.8rem; transition: border-color 0.2s, box-shadow 0.2s, background 0.2s; }
+.week-day:hover { border-color: #334155; }
+.week-day.is-weekend { background: #111c2c; }
+.week-day.is-today { border-color: rgba(34,197,94,0.75); background: linear-gradient(180deg, rgba(34,197,94,0.08), #0f172a 55%); box-shadow: 0 0 0 1px rgba(34,197,94,0.18); }
+.week-day-head { display: flex; align-items: baseline; justify-content: space-between; gap: 0.25rem; margin-bottom: 0.45rem; }
+.week-day-name { font-size: 0.62rem; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: #94a3b8; }
+.week-day.is-today .week-day-name { color: #4ade80; }
+.week-day-date { font-size: 0.68rem; color: #64748b; white-space: nowrap; }
+.week-note { flex: 1; width: 100%; min-height: 135px; padding: 0.5rem 0 0; border: 0; border-top: 1px solid #1e293b; border-radius: 0; background: transparent; color: #e2e8f0; font-size: 0.78rem; line-height: 1.5; resize: vertical; }
+.week-note:focus { border-color: #1e293b; box-shadow: none; outline: none; }
+.week-day:focus-within { border-color: #22c55e; box-shadow: 0 0 0 2px rgba(34,197,94,0.12); }
+.week-note::placeholder { color: #475569; }
+@media (max-width: 1023px) { .week-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (max-width: 767px) { .week-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 520px) { .week-grid { grid-template-columns: 1fr; } .week-day { min-height: 0; } .week-note { min-height: 84px; } }
 .format-card.selected { border-color: #22c55e !important; background: rgba(34,197,94,0.06); }
 .format-card:has(input:focus-visible) { outline: 2px solid #22c55e; outline-offset: 2px; }
 @media print {
@@ -78,14 +94,17 @@ input[type="checkbox"] { accent-color: #22c55e; }
   </header>
 
   <div class="flex gap-1 mb-6 no-print border-b border-slate-800 overflow-x-auto">
-    <button class="tab-btn active flex items-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-3 text-sm font-medium text-slate-400 border-b-2 border-transparent transition-all whitespace-nowrap" data-tab="config-session">
-      <i data-lucide="sliders" class="w-4 h-4"></i><span class="hidden sm:inline">Configurer ma séance</span><span class="sm:hidden">Séance</span>
+    <button class="tab-btn active flex items-center gap-1.5 sm:gap-2 px-2 sm:px-5 py-3 text-sm font-medium text-slate-400 border-b-2 border-transparent transition-all whitespace-nowrap" data-tab="config-session">
+      <i data-lucide="sliders" class="hidden sm:inline w-4 h-4"></i><span class="hidden sm:inline">Configurer ma séance</span><span class="sm:hidden">Séance</span>
     </button>
-    <button class="tab-btn flex items-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-3 text-sm font-medium text-slate-400 border-b-2 border-transparent transition-all whitespace-nowrap" data-tab="database">
-      <i data-lucide="database" class="w-4 h-4"></i><span class="hidden sm:inline">Base d'exercices</span><span class="sm:hidden">Exercices</span>
+    <button class="tab-btn flex items-center gap-1.5 sm:gap-2 px-2 sm:px-5 py-3 text-sm font-medium text-slate-400 border-b-2 border-transparent transition-all whitespace-nowrap" data-tab="week">
+      <i data-lucide="calendar" class="hidden sm:inline w-4 h-4"></i><span class="hidden sm:inline">Configurer ma semaine</span><span class="sm:hidden">Semaine</span>
     </button>
-    <button class="tab-btn flex items-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-3 text-sm font-medium text-slate-400 border-b-2 border-transparent transition-all whitespace-nowrap" data-tab="timer">
-      <i data-lucide="timer" class="w-4 h-4"></i><span class="hidden sm:inline">Chrono WOD</span><span class="sm:hidden">Chrono</span>
+    <button class="tab-btn flex items-center gap-1.5 sm:gap-2 px-2 sm:px-5 py-3 text-sm font-medium text-slate-400 border-b-2 border-transparent transition-all whitespace-nowrap" data-tab="database">
+      <i data-lucide="database" class="hidden sm:inline w-4 h-4"></i><span class="hidden sm:inline">Base d'exercices</span><span class="sm:hidden">Exercices</span>
+    </button>
+    <button class="tab-btn flex items-center gap-1.5 sm:gap-2 px-2 sm:px-5 py-3 text-sm font-medium text-slate-400 border-b-2 border-transparent transition-all whitespace-nowrap" data-tab="timer">
+      <i data-lucide="timer" class="hidden sm:inline w-4 h-4"></i><span class="hidden sm:inline">Chrono WOD</span><span class="sm:hidden">Chrono</span>
     </button>
   </div>
 
@@ -309,6 +328,35 @@ input[type="checkbox"] { accent-color: #22c55e; }
   </div>
 
 </div>
+  </div>
+
+  <div id="tab-week" class="tab-content hidden">
+    <div class="card p-5 sm:p-6">
+      <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-5">
+        <div>
+          <p class="text-xs font-semibold tracking-widest text-accent uppercase mb-1">Planificateur</p>
+          <h2 class="text-xl font-bold text-white flex items-center gap-2">
+            <i data-lucide="calendar" class="w-5 h-5 text-accent"></i>
+            Configurer ma semaine
+          </h2>
+          <p id="week-range" class="text-sm text-slate-400 mt-1"></p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button id="week-prev" class="btn-secondary p-2 rounded-lg" title="Semaine précédente" aria-label="Semaine précédente">
+            <i data-lucide="chevron-left" class="w-4 h-4"></i>
+          </button>
+          <button id="week-today" class="btn-secondary px-3 py-2 rounded-lg text-xs font-medium">Cette semaine</button>
+          <button id="week-next" class="btn-secondary p-2 rounded-lg" title="Semaine suivante" aria-label="Semaine suivante">
+            <i data-lucide="chevron-right" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+      <div id="week-grid" class="week-grid"></div>
+      <div class="flex flex-wrap items-center justify-between gap-2 mt-4 text-xs text-slate-500">
+        <span>Clique dans une case pour écrire ta séance, ton repos ou ton objectif.</span>
+        <span id="week-save-state" aria-live="polite">Sauvegarde automatique</span>
+      </div>
+    </div>
   </div>
 
   <div id="tab-timer" class="tab-content hidden">
@@ -1645,5 +1693,6 @@ refreshIcons();
 document.querySelector('.format-card[data-format="classic"]')?.classList.add('selected');
 </script>
 <script src="timer.js"></script>
+<script src="week.js"></script>
 </body>
 </html>
