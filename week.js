@@ -52,6 +52,36 @@
       .replace(/'/g, '&#39;');
   }
 
+  function csvField(value) {
+    const text = String(value ?? '');
+    return /[",\n\r]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+  }
+
+  function exportWeek() {
+    const rows = [['Date', 'Jour', 'Contenu'].map(csvField).join(',')];
+    let hasContent = false;
+    DAY_NAMES.forEach((name, index) => {
+      const key = dateKey(addDays(state.weekStart, index));
+      const note = String(state.plan[key] || '');
+      if (note.trim()) hasContent = true;
+      rows.push([key, name, note].map(csvField).join(','));
+    });
+    if (!hasContent) {
+      notify("Ajoute au moins une note avant d'exporter.", 'info');
+      return;
+    }
+    const blob = new Blob(['\uFEFF' + rows.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `semaine-${dateKey(state.weekStart)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    notify('Semaine exportée pour Google Sheets.');
+  }
+
   function loadPlan() {
     try {
       const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
@@ -123,6 +153,7 @@
       state.weekStart = startOfWeek(new Date());
       render();
     });
+    document.getElementById('week-export')?.addEventListener('click', exportWeek);
 
     document.getElementById('week-grid')?.addEventListener('click', (event) => {
       const button = event.target.closest('.week-add-exercise');

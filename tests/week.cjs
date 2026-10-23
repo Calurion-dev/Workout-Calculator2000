@@ -114,6 +114,16 @@ async function main() {
     assert.deepEqual(todayDates, currentDates);
   });
 
+  await check('the week exports a Google Sheets-compatible CSV', async () => {
+    const downloadPromise = page.waitForEvent('download');
+    await page.click('#week-export');
+    const download = await downloadPromise;
+    assert.match(download.suggestedFilename(), /^semaine-\d{4}-\d{2}-\d{2}\.csv$/);
+    const csv = fs.readFileSync(await download.path(), 'utf8');
+    assert.ok(csv.startsWith('\uFEFFDate,Jour,Contenu\r\n'));
+    assert.ok(csv.includes(`${firstKey},Lundi,"Pompes 4×12\nTractions 5×5"`));
+  });
+
   await check('emptying a day removes its stored note', async () => {
     await page.fill(`.week-note[data-date="${firstKey}"]`, '');
     const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('calisthenics_week_plan')));

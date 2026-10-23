@@ -345,13 +345,16 @@ input[type="checkbox"] { accent-color: #22c55e; }
           </h2>
           <p id="week-range" class="text-sm text-slate-400 mt-1"></p>
         </div>
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2 flex-wrap">
           <button id="week-prev" class="btn-secondary p-2 rounded-lg" title="Semaine précédente" aria-label="Semaine précédente">
             <i data-lucide="chevron-left" class="w-4 h-4"></i>
           </button>
           <button id="week-today" class="btn-secondary px-3 py-2 rounded-lg text-xs font-medium">Cette semaine</button>
           <button id="week-next" class="btn-secondary p-2 rounded-lg" title="Semaine suivante" aria-label="Semaine suivante">
             <i data-lucide="chevron-right" class="w-4 h-4"></i>
+          </button>
+          <button id="week-export" class="btn-secondary px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-2" title="Exporter la semaine pour Google Sheets" aria-label="Exporter la semaine pour Google Sheets">
+            <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Google Sheets
           </button>
         </div>
       </div>
