@@ -100,6 +100,9 @@
             <span class="week-day-name">${name}</span>
             <span class="week-day-date">${formatDay(day)}</span>
           </div>
+          <button type="button" class="week-add-exercise" data-date="${key}" aria-label="Ajouter un exercice pour ${name} ${formatDay(day)}">
+            <span class="week-add-plus" aria-hidden="true">+</span> Ajouter un exercice
+          </button>
           <textarea class="week-note" data-date="${key}" aria-label="Note pour ${name} ${formatDay(day)}" placeholder="Séance, repos, objectif…">${escapeHtml(value)}</textarea>
         </div>`;
     }).join('');
@@ -119,6 +122,17 @@
     document.getElementById('week-today')?.addEventListener('click', () => {
       state.weekStart = startOfWeek(new Date());
       render();
+    });
+
+    document.getElementById('week-grid')?.addEventListener('click', (event) => {
+      const button = event.target.closest('.week-add-exercise');
+      if (!button) return;
+      const note = button.parentElement?.querySelector('.week-note');
+      if (!note) return;
+      note.value += `${note.value && !note.value.endsWith('\n') ? '\n' : ''}• `;
+      note.focus();
+      note.setSelectionRange(note.value.length, note.value.length);
+      note.dispatchEvent(new Event('input', { bubbles: true }));
     });
 
     document.getElementById('week-grid')?.addEventListener('input', (event) => {

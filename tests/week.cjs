@@ -64,6 +64,26 @@ async function main() {
   });
 
   let firstKey;
+  await check('each day has an add-exercise button before its text area', async () => {
+    assert.equal(await page.locator('#week-grid .week-add-exercise').count(), 7);
+    const ordered = await page.locator('.week-day').evaluateAll(days => days.every(day => {
+      const button = day.querySelector('.week-add-exercise');
+      const note = day.querySelector('.week-note');
+      return button && note && button.nextElementSibling === note;
+    }));
+    assert.equal(ordered, true);
+
+    firstKey = await page.locator('.week-day').first().getAttribute('data-date');
+    const addButton = page.locator(`.week-add-exercise[data-date="${firstKey}"]`);
+    await addButton.click();
+    assert.equal(await page.inputValue(`.week-note[data-date="${firstKey}"]`), '• ');
+    assert.equal(await page.evaluate(() => document.activeElement?.classList.contains('week-note')), true);
+    await addButton.click();
+    assert.equal(await page.inputValue(`.week-note[data-date="${firstKey}"]`), '• \n• ');
+    const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('calisthenics_week_plan')));
+    assert.equal(stored[firstKey], '• \n• ');
+  });
+
   await check('typing in a day saves an entry in localStorage', async () => {
     firstKey = await page.locator('.week-day').first().getAttribute('data-date');
     await page.fill(`.week-note[data-date="${firstKey}"]`, 'Pompes 4×12\nTractions 5×5');
