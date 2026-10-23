@@ -3,8 +3,9 @@
   'use strict';
 
   const STORAGE_KEY = 'calisthenics_week_plan';
+  const EXERCISE_KEY = 'calisthenics_week_exercises';
   const DAY_NAMES = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
-  const state = { weekStart: startOfWeek(new Date()), plan: loadPlan() };
+  const state = { weekStart: startOfWeek(new Date()), plan: loadPlan(), exercises: loadExercises() };
   let savedTimer = 0;
 
   function pad2(value) {
@@ -58,13 +59,22 @@
   }
 
   function exportWeek() {
-    const rows = [['Date', 'Jour', 'Contenu'].map(csvField).join(',')];
+    const rows = [['Date', 'Jour', 'Exercice', 'Répétitions', 'Lest', 'Notes'].map(csvField).join(',')];
     let hasContent = false;
     DAY_NAMES.forEach((name, index) => {
       const key = dateKey(addDays(state.weekStart, index));
       const note = String(state.plan[key] || '');
-      if (note.trim()) hasContent = true;
-      rows.push([key, name, note].map(csvField).join(','));
+      const exercises = (state.exercises[key] || []).filter(exercise =>
+        [exercise.name, exercise.reps, exercise.load].some(value => String(value || '').trim())
+      );
+      if (note.trim() || exercises.length) hasContent = true;
+      if (exercises.length) {
+        exercises.forEach((exercise, position) => {
+          rows.push([key, name, exercise.name, exercise.reps, exercise.load, position === 0 ? note : ''].map(csvField).join(','));
+        });
+      } else {
+        rows.push([key, name, '', '', '', note].map(csvField).join(','));
+      }
     });
     if (!hasContent) {
       notify("Ajoute au moins une note avant d'exporter.", 'info');
@@ -100,6 +110,44 @@
     }
   }
 
+  function loadExercises() {
+    try {
+      const parsed = JSON.parse(localStorage.getItem(EXERCISE_KEY) || '{}');
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {};
+      const clean = {};
+      Object.entries(parsed).forEach(([key, rows]) => {
+        if (!Array.isArray(rows)) return;
+        clean[key] = rows.map(row => ({
+          name: String(row?.name || ''),
+          reps: String(row?.reps || ''),
+          load: String(row?.load || ''),
+        }));
+      });
+      return clean;
+    } catch {
+      return {};
+    }
+  }
+
+  function saveExercises() {
+    try {
+      localStorage.setItem(EXERCISE_KEY, JSON.stringify(state.exercises));
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  function persistWeek() {
+    if (savePlan() && saveExercises()) {
+      markSaved();
+      return true;
+    }
+    const status = document.getElementById('week-save-state');
+    if (status) status.textContent = 'Sauvegarde impossible';
+    return false;
+  }
+
   function markSaved() {
     const el = document.getElementById('week-save-state');
     if (!el) return;
@@ -108,6 +156,19 @@
     savedTimer = window.setTimeout(() => {
       el.textContent = 'Sauvegarde automatique';
     }, 1800);
+  }
+
+  function exerciseRowHtml(exercise, index, key, dayLabel) {
+    const position = index + 1;
+    return `
+      <div class="week-exercise" data-index="${index}">
+        <input class="week-exercise-name" type="text" value="${escapeHtml(exercise.name)}" placeholder="Nom" autocomplete="off" aria-label="Nom de l'exercice ${position} pour ${dayLabel}">
+        <div class="week-exercise-bottom">
+          <input class="week-exercise-reps" type="text" inputmode="numeric" value="${escapeHtml(exercise.reps)}" placeholder="Reps" autocomplete="off" aria-label="Répétitions de l'exercice ${position} pour ${dayLabel}">
+          <input class="week-exercise-load" type="text" inputmode="decimal" value="${escapeHtml(exercise.load)}" placeholder="Lest" autocomplete="off" aria-label="Lest de l'exercice ${position} pour ${dayLabel}">
+          <button type="button" class="week-exercise-remove" data-date="${key}" data-index="${index}" aria-label="Supprimer l'exercice ${position} de ${dayLabel}">×</button>
+        </div>
+      </div>`;
   }
 
   function render() {
@@ -121,6 +182,8 @@
       const day = addDays(state.weekStart, index);
       const key = dateKey(day);
       const value = state.plan[key] || '';
+      const dayLabel = `${name} ${formatDay(day)}`;
+      const exercises = state.exercises[key] || [];
       const classes = ['week-day'];
       if (index >= 5) classes.push('is-weekend');
       if (sameDay(day, today)) classes.push('is-today');
@@ -130,10 +193,11 @@
             <span class="week-day-name">${name}</span>
             <span class="week-day-date">${formatDay(day)}</span>
           </div>
-          <button type="button" class="week-add-exercise" data-date="${key}" aria-label="Ajouter un exercice pour ${name} ${formatDay(day)}">
+          <button type="button" class="week-add-exercise" data-date="${key}" aria-label="Ajouter un exercice pour ${dayLabel}">
             <span class="week-add-plus" aria-hidden="true">+</span> Ajouter un exercice
           </button>
-          <textarea class="week-note" data-date="${key}" aria-label="Note pour ${name} ${formatDay(day)}" placeholder="Séance, repos, objectif…">${escapeHtml(value)}</textarea>
+          <div class="week-exercises" data-date="${key}">${exercises.map((exercise, position) => exerciseRowHtml(exercise, position, key, dayLabel)).join('')}</div>
+          <textarea class="week-note" data-date="${key}" aria-label="Note pour ${dayLabel}" placeholder="Notes du jour…">${escapeHtml(value)}</textarea>
         </div>`;
     }).join('');
   }
@@ -156,27 +220,52 @@
     document.getElementById('week-export')?.addEventListener('click', exportWeek);
 
     document.getElementById('week-grid')?.addEventListener('click', (event) => {
-      const button = event.target.closest('.week-add-exercise');
-      if (!button) return;
-      const note = button.parentElement?.querySelector('.week-note');
-      if (!note) return;
-      note.value += `${note.value && !note.value.endsWith('\n') ? '\n' : ''}• `;
-      note.focus();
-      note.setSelectionRange(note.value.length, note.value.length);
-      note.dispatchEvent(new Event('input', { bubbles: true }));
+      const addButton = event.target.closest('.week-add-exercise');
+      if (addButton) {
+        const key = addButton.dataset.date;
+        if (!state.exercises[key]) state.exercises[key] = [];
+        state.exercises[key].push({ name: '', reps: '', load: '' });
+        persistWeek();
+        render();
+        document.querySelector(`.week-day[data-date="${key}"] .week-exercise:last-child .week-exercise-name`)?.focus();
+        return;
+      }
+
+      const removeButton = event.target.closest('.week-exercise-remove');
+      if (!removeButton) return;
+      const key = removeButton.dataset.date;
+      const index = Number(removeButton.dataset.index);
+      const rows = state.exercises[key];
+      if (!rows || !Number.isInteger(index)) return;
+      rows.splice(index, 1);
+      if (!rows.length) delete state.exercises[key];
+      persistWeek();
+      render();
+      document.querySelector(`.week-day[data-date="${key}"] .week-add-exercise`)?.focus();
     });
 
     document.getElementById('week-grid')?.addEventListener('input', (event) => {
+      const field = event.target.closest('.week-exercise input');
+      if (field) {
+        const row = field.closest('.week-exercise');
+        const key = field.closest('.week-day')?.dataset.date;
+        const index = Number(row?.dataset.index);
+        const item = state.exercises[key]?.[index];
+        if (!item) return;
+        if (field.classList.contains('week-exercise-name')) item.name = field.value;
+        else if (field.classList.contains('week-exercise-reps')) item.reps = field.value;
+        else if (field.classList.contains('week-exercise-load')) item.load = field.value;
+        else return;
+        persistWeek();
+        return;
+      }
+
       const note = event.target.closest('.week-note');
       if (!note) return;
       const key = note.dataset.date;
       if (note.value) state.plan[key] = note.value;
       else delete state.plan[key];
-      if (savePlan()) markSaved();
-      else {
-        const status = document.getElementById('week-save-state');
-        if (status) status.textContent = 'Sauvegarde impossible';
-      }
+      persistWeek();
     });
 
     document.addEventListener('site:tabchange', (event) => {

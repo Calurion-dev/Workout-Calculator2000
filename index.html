@@ -50,6 +50,16 @@ input[type="checkbox"] { accent-color: #22c55e; }
 .week-add-exercise:hover { border-color: #22c55e; background: rgba(34,197,94,0.12); color: #bbf7d0; }
 .week-add-exercise:focus-visible { outline: 2px solid #22c55e; outline-offset: 2px; }
 .week-add-plus { font-size: 0.85rem; line-height: 1; font-weight: 600; }
+.week-exercises { display: flex; flex-direction: column; gap: 0.35rem; margin-bottom: 0.45rem; }
+.week-exercise { position: relative; display: flex; flex-direction: column; gap: 0.25rem; padding: 0.35rem; background: rgba(2,6,23,0.55); border: 1px solid #263548; border-radius: 0.45rem; }
+.week-exercise input { width: 100%; min-width: 0; padding: 0.35rem 0.4rem; border: 1px solid #334155; border-radius: 0.35rem; background: #0b1220; color: #e2e8f0; font-size: 0.72rem; line-height: 1.2; }
+.week-exercise input.week-exercise-name { padding-right: 2.1rem; }
+.week-exercise input::placeholder { color: #475569; }
+.week-exercise input:focus { outline: 2px solid #22c55e; outline-offset: 0; border-color: #22c55e; }
+.week-exercise-bottom { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 0.25rem; align-items: center; }
+.week-exercise-remove { position: absolute; top: 0.35rem; right: 0.35rem; display: flex; align-items: center; justify-content: center; width: 1.7rem; height: 1.7rem; padding: 0; border: 1px solid #334155; border-radius: 0.35rem; background: transparent; color: #94a3b8; font-size: 1rem; line-height: 1; cursor: pointer; }
+.week-exercise-remove:hover { border-color: #ef4444; color: #f87171; }
+.week-exercise-remove:focus-visible { outline: 2px solid #ef4444; outline-offset: 1px; }
 .week-note { flex: 1; width: 100%; min-height: 135px; padding: 0.5rem 0 0; border: 0; border-top: 1px solid #1e293b; border-radius: 0; background: transparent; color: #e2e8f0; font-size: 0.78rem; line-height: 1.5; resize: vertical; }
 .week-note:focus { border-color: #1e293b; box-shadow: none; outline: none; }
 .week-day:focus-within { border-color: #22c55e; box-shadow: 0 0 0 2px rgba(34,197,94,0.12); }

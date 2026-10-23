@@ -64,24 +64,41 @@ async function main() {
   });
 
   let firstKey;
-  await check('each day has an add-exercise button before its text area', async () => {
+  await check('adding an exercise creates name, reps and load fields', async () => {
     assert.equal(await page.locator('#week-grid .week-add-exercise').count(), 7);
     const ordered = await page.locator('.week-day').evaluateAll(days => days.every(day => {
       const button = day.querySelector('.week-add-exercise');
+      const exercises = day.querySelector('.week-exercises');
       const note = day.querySelector('.week-note');
-      return button && note && button.nextElementSibling === note;
+      return button && exercises && note && button.nextElementSibling === exercises && exercises.nextElementSibling === note;
     }));
     assert.equal(ordered, true);
 
     firstKey = await page.locator('.week-day').first().getAttribute('data-date');
-    const addButton = page.locator(`.week-add-exercise[data-date="${firstKey}"]`);
+    const day = page.locator(`.week-day[data-date="${firstKey}"]`);
+    const addButton = day.locator('.week-add-exercise');
     await addButton.click();
-    assert.equal(await page.inputValue(`.week-note[data-date="${firstKey}"]`), '• ');
-    assert.equal(await page.evaluate(() => document.activeElement?.classList.contains('week-note')), true);
+    assert.equal(await day.locator('.week-exercise').count(), 1);
+    const placeholders = await day.locator('.week-exercise input').evaluateAll(els => els.map(el => el.placeholder));
+    assert.deepEqual(placeholders, ['Nom', 'Reps', 'Lest']);
+    assert.equal(await page.evaluate(() => document.activeElement?.classList.contains('week-exercise-name')), true);
+
+    await day.locator('.week-exercise-name').fill('Pompes');
+    await day.locator('.week-exercise-reps').fill('12');
+    await day.locator('.week-exercise-load').fill('10 kg');
+    let stored = await page.evaluate(() => JSON.parse(localStorage.getItem('calisthenics_week_exercises')));
+    assert.deepEqual(stored[firstKey], [{ name: 'Pompes', reps: '12', load: '10 kg' }]);
+
     await addButton.click();
-    assert.equal(await page.inputValue(`.week-note[data-date="${firstKey}"]`), '• \n• ');
-    const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('calisthenics_week_plan')));
-    assert.equal(stored[firstKey], '• \n• ');
+    assert.equal(await day.locator('.week-exercise').count(), 2);
+    await day.locator('.week-exercise').nth(1).locator('.week-exercise-name').fill('Tractions');
+    await day.locator('.week-exercise').nth(1).locator('.week-exercise-reps').fill('8');
+    await day.locator('.week-exercise').nth(1).locator('.week-exercise-load').fill('5 kg');
+    stored = await page.evaluate(() => JSON.parse(localStorage.getItem('calisthenics_week_exercises')));
+    assert.deepEqual(stored[firstKey], [
+      { name: 'Pompes', reps: '12', load: '10 kg' },
+      { name: 'Tractions', reps: '8', load: '5 kg' },
+    ]);
   });
 
   await check('typing in a day saves an entry in localStorage', async () => {
@@ -91,11 +108,22 @@ async function main() {
     assert.equal(stored[firstKey], 'Pompes 4×12\nTractions 5×5');
   });
 
-  await check('saved notes survive a reload and reopening the tab', async () => {
+  await check('saved notes and exercises survive a reload and reopening the tab', async () => {
     await page.reload({ waitUntil: 'load' });
     await page.click('.tab-btn[data-tab="week"]');
     await page.waitForSelector('#tab-week:not(.hidden)');
     assert.equal(await page.inputValue(`.week-note[data-date="${firstKey}"]`), 'Pompes 4×12\nTractions 5×5');
+    const rows = page.locator(`.week-day[data-date="${firstKey}"] .week-exercise`);
+    assert.equal(await rows.count(), 2);
+    const exercises = await rows.evaluateAll(els => els.map(el => ({
+      name: el.querySelector('.week-exercise-name').value,
+      reps: el.querySelector('.week-exercise-reps').value,
+      load: el.querySelector('.week-exercise-load').value,
+    })));
+    assert.deepEqual(exercises, [
+      { name: 'Pompes', reps: '12', load: '10 kg' },
+      { name: 'Tractions', reps: '8', load: '5 kg' },
+    ]);
   });
 
   await check('week navigation keeps a separate note for each week', async () => {
@@ -120,8 +148,17 @@ async function main() {
     const download = await downloadPromise;
     assert.match(download.suggestedFilename(), /^semaine-\d{4}-\d{2}-\d{2}\.csv$/);
     const csv = fs.readFileSync(await download.path(), 'utf8');
-    assert.ok(csv.startsWith('\uFEFFDate,Jour,Contenu\r\n'));
-    assert.ok(csv.includes(`${firstKey},Lundi,"Pompes 4×12\nTractions 5×5"`));
+    assert.ok(csv.startsWith('\uFEFFDate,Jour,Exercice,Répétitions,Lest,Notes\r\n'));
+    assert.ok(csv.includes(`${firstKey},Lundi,Pompes,12,10 kg,"Pompes 4×12\nTractions 5×5"`));
+    assert.ok(csv.includes(`${firstKey},Lundi,Tractions,8,5 kg,`));
+  });
+
+  await check('removing an exercise deletes its row and stored data', async () => {
+    const day = page.locator(`.week-day[data-date="${firstKey}"]`);
+    await day.locator('.week-exercise').first().locator('.week-exercise-remove').click();
+    assert.equal(await day.locator('.week-exercise').count(), 1);
+    const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('calisthenics_week_exercises')));
+    assert.deepEqual(stored[firstKey], [{ name: 'Tractions', reps: '8', load: '5 kg' }]);
   });
 
   await check('emptying a day removes its stored note', async () => {
